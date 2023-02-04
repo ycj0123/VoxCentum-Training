@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+checkpoints_*
+meta
+metatest
+datasets.py
+contrastive_loss.py
+*.csv
