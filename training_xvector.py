@@ -7,22 +7,23 @@ Created on Sat May 30 20:22:26 2020
 """
 
 
-
-import torch
-import numpy as np
-from torch.utils.data import DataLoader   
-from SpeechDataGenerator_precomp_feats import SpeechDataGenerator_precomp_features
-import torch.nn as nn
-import os
-import numpy as np
-from torch import optim
 import argparse
-from models.x_vector_Indian_LID import X_vector
+import os
+
+import numpy as np
+import torch
+import torch.nn as nn
+from torch import optim
+from torch.utils.data import DataLoader   
 from sklearn.metrics import accuracy_score
-from utils.utils import speech_collate
-import torch.nn.functional as F
 from contrastive_loss import ContrastiveLoss
 from tqdm import tqdm
+
+from models.x_vector_Indian_LID import X_vector
+from utils.utils import speech_collate
+from SpeechDataGenerator_precomp_feats import SpeechDataGenerator_precomp_features
+
+
 torch.multiprocessing.set_sharing_strategy('file_system')
 
 
@@ -139,7 +140,7 @@ def validation(dataloader_val,epoch):
         print('Total validation loss {} and Validation accuracy {} after {} epochs'.format(mean_loss,mean_acc,epoch))
         
         if epoch % 10 == 0 or (epoch == args.num_epochs - 1):
-            model_save_path = os.path.join(args.save_path, 'checkpoint_'+str(epoch)+'_'+str(mean_loss))
+            model_save_path = os.path.join(args.save_path, f'checkpoint_{epoch}_{mean_loss:.3f}')
             os.makedirs(args.save_path, exist_ok=True)
             state_dict = {'model': model.state_dict(),'optimizer': optimizer.state_dict(),'epoch': epoch}
             torch.save(state_dict, model_save_path)

@@ -18,17 +18,16 @@ import numpy as np
 from torch import optim
 import argparse
 from models.x_vector_Indian_LID import X_vector
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, f1_score
 from utils.utils import speech_collate_pad
 import torch.nn.functional as F
-from contrastive_loss import ContrastiveLoss
 import pandas as pd
 torch.multiprocessing.set_sharing_strategy('file_system')
 
 
 ########## Argument parser
 parser = argparse.ArgumentParser(add_help=False)
-parser.add_argument('-model_path',type=str, default='0131_75/checkpoint_49_0.1850184296161369')
+parser.add_argument('-model_path',type=str, default='checkpoints_0130_noncl/checkpoint_49_0.10494625493131503')
 parser.add_argument('-testing_filepath',type=str, default='metatest/training_feat.txt')
 
 parser.add_argument('-input_dim', action="store_true", default=257)
@@ -62,8 +61,8 @@ def inference(dataloader_val):
             features, labels = features.to(device),labels.to(device)
             pred_logits,x_vec = model(features)
             #### CE loss
-            loss = celoss(pred_logits,labels)
-            val_loss_list.append(loss.item())
+            # loss = celoss(pred_logits,labels)
+            # val_loss_list.append(loss.item())
             #train_acc_list.append(accuracy)
             predictions = np.argmax(pred_logits.detach().cpu().numpy(),axis=1)
             for pred in predictions:
@@ -73,8 +72,10 @@ def inference(dataloader_val):
         df = pd.DataFrame(data={"Predictions": full_preds, "Ground Truth": full_gts})
         df.to_csv("output.csv")
         mean_acc = accuracy_score(full_gts,full_preds)
-        mean_loss = np.mean(np.asarray(val_loss_list))
-        print('Total testing loss {} and testing accuracy {}'.format(mean_loss,mean_acc))
+        f1s = f1_score(full_gts,full_preds, average=None)
+        # mean_loss = np.mean(np.asarray(val_loss_list))
+        print('Total testing accuracy: {}'.format(mean_acc))
+        print('F1 scores for each class: {}'.format(f1s))
     
 if __name__ == '__main__':
     inference(dataloader_test)

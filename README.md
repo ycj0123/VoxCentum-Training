@@ -21,7 +21,17 @@ pip iinstall -r requirements.txt
 ## Create manifest files for training and testing
 This step creates training and testing files.
 ```
-python datasets.py --processed_data  /media/newhd/youtube_lid_data/download_data --meta_store_path meta/ 
+python datasets.py --processed_data  /mnt/storage2t/crnn-lid_segmented --meta_store_path manifest 
+```
+Data should be structured as
+```
+├── language_x
+    ├── sub_folder_1
+        ...
+    ├── sub_folder_2
+        ...
+    └── sub_folder_3
+        ...
 ```
 
 ## Training
