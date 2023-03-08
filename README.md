@@ -6,7 +6,7 @@ Tutorial : https://www.youtube.com/watch?v=8nZjiXEdMH0
 
 Install required packges using requirements.txt
 ```bash
-pip iinstall -r requirements.txt
+pip install -r requirements.txt
 ```
 
 ## Create manifest files for training and testing
