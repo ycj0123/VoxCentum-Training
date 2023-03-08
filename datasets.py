@@ -3,7 +3,7 @@
 """
 Created on Sat May 30 19:09:44 2020
 
-@author: krishna Iuthing
+@author: krishna, Iuthing
 """
 
 import os

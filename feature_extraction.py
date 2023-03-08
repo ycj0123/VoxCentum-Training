@@ -3,7 +3,7 @@
 """
 Created on Sun May 31 11:15:47 2020
 
-@author: krishna Iuthing
+@author: krishna, Iuthing
 """
 
 import argparse

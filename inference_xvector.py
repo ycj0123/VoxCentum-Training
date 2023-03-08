@@ -3,7 +3,7 @@
 """
 Created on Sat May 30 20:22:26 2020
 
-@author: krishna Iuthing
+@author: krishna, Iuthing
 """
 
 
