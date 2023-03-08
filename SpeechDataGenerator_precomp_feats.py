@@ -3,7 +3,7 @@
 """
 Created on Sat Jul 20 14:09:31 2019
 
-@author: Krishna
+@author: krishna Iuthing
 """
 import numpy as np
 import torch

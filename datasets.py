@@ -3,7 +3,7 @@
 """
 Created on Sat May 30 19:09:44 2020
 
-@author: krishna
+@author: krishna Iuthing
 """
 
 import os
@@ -75,12 +75,12 @@ def extract_split_files(folder_path, valid_frac, test_frac):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Configuration for data preparation")
-    parser.add_argument("--processed_data", default="/mnt/storage2t/crnn-lid_segmented", type=str,help='Dataset path')
-    parser.add_argument("--meta_store_path", default="manifest", type=str, help='Save directory after processing')
+    parser.add_argument("--raw_data", default="/mnt/storage2t/crnn-lid_segmented", type=str,help='Dataset path')
+    parser.add_argument("--meta_store_path", default="meta", type=str, help='Save directory after processing')
     parser.add_argument("--valid_frac", default="0.1", type=float, help="portion to split into valid set")
     parser.add_argument("--test_frac", default="0.1", type=float, help="portion to split into test set")
     config = parser.parse_args()
-    train_list, test_list, val_lists, class_ids = extract_split_files(config.processed_data, config.valid_frac, config.test_frac)
+    train_list, test_list, val_lists, class_ids = extract_split_files(config.raw_data, config.valid_frac, config.test_frac)
     
     with open(f"{config.meta_store_path}/class_ids.json", "w+") as f:
         json.dump(class_ids, f, indent=4)

@@ -3,7 +3,7 @@
 """
 Created on Sat May 30 20:22:26 2020
 
-@author: krishna
+@author: krishna Iuthing
 """
 
 
@@ -29,18 +29,18 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 ########## Argument parser
 parser = argparse.ArgumentParser(add_help=False)
-parser.add_argument('-training_filepath',type=str,default='meta/training_feat.txt')
-parser.add_argument('-testing_filepath',type=str, default='meta/testing_feat.txt')
-parser.add_argument('-validation_filepath',type=str, default='meta/validation_feat.txt')
-parser.add_argument('-save_path',type=str, default='./save_model')
+parser.add_argument('--training_filepath',type=str,default='meta/training_feat.txt')
+parser.add_argument('--testing_filepath',type=str, default='meta/testing_feat.txt')
+parser.add_argument('--validation_filepath',type=str, default='meta/validation_feat.txt')
+parser.add_argument('--save_path',type=str, default='./save_model')
 
-parser.add_argument('-input_dim', action="store_true", default=257)
-parser.add_argument('-num_classes', action="store_true", default=7)
-parser.add_argument('-lamda_val', action="store_true", default=0.1)
-parser.add_argument('-batch_size', action="store_true", default=256)
-parser.add_argument('-use_gpu', action="store_true", default=True)
-parser.add_argument('-num_epochs', action="store_true", default=50)
-parser.add_argument('-contrastive_loss', action="store_true", default=False)
+parser.add_argument('--input_dim', action="store_true", default=257)
+parser.add_argument('--num_classes', action="store_true", default=7)
+parser.add_argument('--lamda_val', action="store_true", default=0.1)
+parser.add_argument('--batch_size', action="store_true", default=256)
+parser.add_argument('--use_gpu', action="store_true", default=True)
+parser.add_argument('--num_epochs', action="store_true", default=50)
+parser.add_argument('--contrastive_loss', action="store_true", default=False)
 args = parser.parse_args()
 
 family = {'Chinese': {1, 5, 6}, 'European': {0, 2, 3, 4}}

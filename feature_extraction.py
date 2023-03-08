@@ -3,11 +3,13 @@
 """
 Created on Sun May 31 11:15:47 2020
 
-@author: krishna
+@author: krishna Iuthing
 """
 
+import argparse
 import os
 import numpy as np
+
 from utils import utils
 
 def extract_features(audio_filepath):
@@ -48,14 +50,19 @@ def FE_pipeline(feature_list,store_loc,mode):
 
 
 if __name__ == '__main__':
-    store_loc = '/mnt/storage2t/crnn-lid_segmented/'
-    read_train = [line.rstrip('\n') for line in open('meta/training.txt')]
+    parser = argparse.ArgumentParser("Configuration for data preparation")
+    parser.add_argument("--raw_data", default="/mnt/storage2t/crnn-lid_segmented/", type=str,help='Dataset path')
+    parser.add_argument("--meta_store_path", default="meta", type=str, help='Save directory after processing')
+    config = parser.parse_args()
+
+    store_loc = config.raw_data
+    read_train = [line.rstrip('\n') for line in open(os.path.join(config.meta_store_path, 'training.txt'))]
     FE_pipeline(read_train,store_loc,mode='train')
     
-    read_test = [line.rstrip('\n') for line in open('meta/testing.txt')]
+    read_test = [line.rstrip('\n') for line in open(os.path.join(config.meta_store_path, 'testing.txt'))]
     FE_pipeline(read_test,store_loc,mode='test')
     
-    read_val = [line.rstrip('\n') for line in open('meta/validation.txt')]
+    read_val = [line.rstrip('\n') for line in open(os.path.join(config.meta_store_path, 'validation.txt'))]
     FE_pipeline(read_val,store_loc,mode='validation')
     
     

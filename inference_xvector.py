@@ -3,7 +3,7 @@
 """
 Created on Sat May 30 20:22:26 2020
 
-@author: krishna
+@author: krishna Iuthing
 """
 
 
@@ -27,7 +27,7 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 ########## Argument parser
 parser = argparse.ArgumentParser(add_help=False)
-parser.add_argument('-model_path',type=str, default='checkpoints_0130_noncl/checkpoint_49_0.10494625493131503')
+parser.add_argument('-model_path',type=str, default='checkpoints_0131_75/checkpoint_49_0.1850184296161369')
 parser.add_argument('-testing_filepath',type=str, default='metatest/training_feat.txt')
 
 parser.add_argument('-input_dim', action="store_true", default=257)
