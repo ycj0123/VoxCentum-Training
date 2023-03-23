@@ -14,33 +14,55 @@ pip install -r requirements.txt
 This step creates training and testing files.
 
 ```bash=
-python datasets.py --raw_data /mnt/storage2t/crnn-lid_segmented --meta_store_path manifest 
+python datasets.py --raw_data /path/to/raw_data --meta_store_path manifest 
 ```
 
-Data should be structured as
+Data should be structured as follows:
 
 ```bash=
-├── language_x
-    ├── sub_folder_1
+├── /path/to/raw_data
+    ├── language_x
         ...
-    ├── sub_folder_2
+    ├── language_y
         ...
-    └── sub_folder_3
+    └── language_z
         ...
 ```
 
 ## Offline Fearture Extracting
 
+You can choose to either extract features offline or do it while training (online).
+
 ```bash=
-python feature_extraction.py  --raw_data /mnt/storage2t/crnn-lid_segmented --meta_store_path manifest             
+python feature_extraction.py  --raw_data /path/to/raw_data --meta_store_path manifest             
+```
+
+The extracted features will be stored as follows:
+
+```bash=
+├── /path/to/raw_data
+    ├── train
+        ...
+    ├── validation
+        ...
+    └── test
+        ...
 ```
 
 ## Training
 This steps starts training the X-vector model for language identification 
+
 ```bash=
-python training_xvector.py --training_filepath meta/training.txt --testing_filepath meta/testing.txt
-                        --validation_filepath meta/validation.txt --input_dim 40 --num_classes 8
-                        --batch_size 32 --use_gpu True --num_epochs 100
+# offline
+# remember to check in `training_xvector.py` the default of `--extract_online` is set to False
+python training_xvector.py --training_feature manifest/training.txt --validation_feature manifest/validation.txt
+                        --input_dim 257 --num_classes 14 --batch_size 256 --num_epochs 50 --save_epoch 10
+                        --use_gpu
+
+# online
+python training_xvector.py --training_feature manifest/training.txt --validation_feature manifest/validation.txt
+                        --input_dim 257 --num_classes 14 --batch_size 256 --num_epochs 50 --save_epoch 10
+                        --use_gpu --extract_online
 ```
 
 ## License
