@@ -11,7 +11,7 @@ Created on Sat May 30 20:22:26 2020
 import torch
 import numpy as np
 from torch.utils.data import DataLoader   
-from SpeechDataGenerator_precomp_feats import SpeechDataGenerator_precomp_features
+from modules.feature_dataset import SpeechFeatureDataset
 import torch.nn as nn
 import os
 import numpy as np
@@ -19,7 +19,7 @@ from torch import optim
 import argparse
 from models.x_vector_Indian_LID import X_vector
 from sklearn.metrics import accuracy_score, f1_score
-from utils.utils import speech_collate_pad
+from modules.utils import speech_collate_pad
 import torch.nn.functional as F
 import pandas as pd
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -32,13 +32,12 @@ parser.add_argument('-testing_filepath',type=str, default='metatest/training_fea
 
 parser.add_argument('-input_dim', action="store_true", default=257)
 parser.add_argument('-num_classes', action="store_true", default=7)
-parser.add_argument('-lamda_val', action="store_true", default=0.1)
 parser.add_argument('-batch_size', action="store_true", default=256)
 parser.add_argument('-use_gpu', action="store_true", default=True)
 args = parser.parse_args()
 
 ### Data related
-dataset_test = SpeechDataGenerator_precomp_features(manifest=args.testing_filepath,mode='test')
+dataset_test = SpeechFeatureDataset(manifest=args.testing_filepath,mode='test')
 dataloader_test = DataLoader(dataset_test, batch_size=args.batch_size,shuffle=False,collate_fn=speech_collate_pad) 
 
 ## Model related

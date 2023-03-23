@@ -26,10 +26,11 @@ def lin_mel_from_wav(wav, hop_length, win_length, n_mels):
 
 def lin_spectogram_from_wav(wav, hop_length, win_length, n_fft=512):
     linear = librosa.stft(wav, n_fft=n_fft, win_length=win_length, hop_length=hop_length) # linear spectrogram
+    # output size ≈ (1 + n_fft/2, seconds*sr/hop_length)
     return linear.T
 
 
-def feature_extraction(filepath,sr=16000, min_dur_sec=4,win_length=400,hop_length=160, n_mels=256, spec_len=400,mode='train'):
+def feature_extraction(filepath,sr=16000, min_dur_sec=4,win_length=1000,hop_length=160, n_mels=256, spec_len=400,mode='train'):
     audio_data = load_wav(filepath, sr=sr,min_dur_sec=min_dur_sec)
     # mel_spect = lin_mel_from_wav(audio_data, hop_length, win_length, n_mels)
     lin_spect = lin_spectogram_from_wav(audio_data, hop_length, win_length, n_fft=512)
@@ -41,8 +42,8 @@ def feature_extraction(filepath,sr=16000, min_dur_sec=4,win_length=400,hop_lengt
     
     
     
-    
-def load_data(filepath,sr=16000, min_dur_sec=4,win_length=400,hop_length=160, n_mels=40, spec_len=400,mode='train'):
+## Used by SpeechDataset
+def load_data(filepath,sr=16000, min_dur_sec=4,win_length=1000,hop_length=160, n_mels=40, spec_len=400,mode='train'):
     audio_data = load_wav(filepath, sr=sr,min_dur_sec=min_dur_sec)
     # linear_spect = lin_spectogram_from_wav(audio_data, hop_length, win_length, n_mels)
     linear_spect = lin_spectogram_from_wav(audio_data, hop_length, win_length, n_fft=512)
@@ -61,7 +62,7 @@ def load_data(filepath,sr=16000, min_dur_sec=4,win_length=400,hop_length=160, n_
     return (spec_mag - mu) / (std + 1e-5)
     
 
-
+## Used by SpeechFeatureDataset
 def load_npy_data(filepath,spec_len=400,mode='train'):
     mag_T = np.load(filepath)
     if mode=='train':

@@ -7,9 +7,9 @@ Created on Sat Jul 20 14:09:31 2019
 """
 import numpy as np
 import torch
-from utils import utils
+from modules import utils
 
-class SpeechDataGenerator_precomp_features():
+class SpeechFeatureDataset():
     """Speech dataset."""
 
     def __init__(self, manifest, mode):

@@ -12,6 +12,9 @@ import glob
 import argparse
 import json
 
+from nlp2.file import get_files_from_dir
+from tqdm import tqdm
+
 def random_split(mylist, ratio):
     if ratio < 0.5:
         ratio = 1-ratio
@@ -52,15 +55,11 @@ def extract_split_files(folder_path, valid_frac, test_frac):
     val_list = []
     test_list = []
 
-    for id, lang_folderpath in enumerate(all_lang_folders):
+    for id, lang_folderpath in enumerate(tqdm(all_lang_folders)):
         all_list = []
-        sub_folders = sorted(glob.glob(lang_folderpath+'/*/'))
-        for i in range(len(sub_folders)):
-            sub_folder = sub_folders[i]
-            all_files = sorted(glob.glob(sub_folder+'/*.wav'))
-            for audio_filepath in all_files:
-                to_write = audio_filepath+' '+str(id)
-                all_list.append(to_write)
+        for audio_path in get_files_from_dir(lang_folderpath, match='wav'):
+            to_write = audio_path+' '+str(id)
+            all_list.append(to_write)
         
         lang_train, other = random_split(all_list, valid_frac+test_frac)
         larger = max(valid_frac, test_frac)
@@ -75,13 +74,14 @@ def extract_split_files(folder_path, valid_frac, test_frac):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Configuration for data preparation")
-    parser.add_argument("--raw_data", default="/mnt/storage2t/crnn-lid_segmented", type=str,help='Dataset path')
-    parser.add_argument("--meta_store_path", default="meta", type=str, help='Save directory after processing')
-    parser.add_argument("--valid_frac", default="0.1", type=float, help="portion to split into valid set")
-    parser.add_argument("--test_frac", default="0.1", type=float, help="portion to split into test set")
+    parser.add_argument("--raw_data", default="/mnt/metanas/VoxCentum_stage1", type=str,help='Dataset path')
+    parser.add_argument("--meta_store_path", default="manifest", type=str, help='Save directory after processing')
+    parser.add_argument("--valid_frac", default="0.05", type=float, help="portion to split into valid set")
+    parser.add_argument("--test_frac", default="0.05", type=float, help="portion to split into test set")
     config = parser.parse_args()
     train_list, test_list, val_lists, class_ids = extract_split_files(config.raw_data, config.valid_frac, config.test_frac)
     
+    os.makedirs(config.meta_store_path, exist_ok=True)
     with open(f"{config.meta_store_path}/class_ids.json", "w+") as f:
         json.dump(class_ids, f, indent=4)
     
