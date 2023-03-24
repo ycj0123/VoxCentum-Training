@@ -5,7 +5,7 @@ Paper: https://danielpovey.com/files/2018_odyssey_xvector_lid.pdf
 
 Tutorial : https://www.youtube.com/watch?v=8nZjiXEdMH0
 
-Python version == `3.10.8`
+Python version == `3.10.8` is recommended.
 
 Install required packges using requirements.txt
 ```bash=
