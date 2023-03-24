@@ -14,8 +14,8 @@ from tqdm import tqdm
 from modules import utils
 
 def extract_features(audio_filepath, spec_len_sec):
-    spec_len = 16000 * spec_len_sec / 160
-    features = utils.feature_extraction(audio_filepath, spec_length=spec_len)
+    spec_len = 16000 * spec_len_sec // 160
+    features = utils.feature_extraction(audio_filepath, spec_len=spec_len)
     return features
     
     

@@ -1,11 +1,14 @@
 # x-vector-pytorch
 This repo contains the implementation of the paper "Spoken Language Recognition using X-vectors" in Pytorch
+
 Paper: https://danielpovey.com/files/2018_odyssey_xvector_lid.pdf
 
 Tutorial : https://www.youtube.com/watch?v=8nZjiXEdMH0
 
+Python version == `3.10.8`
+
 Install required packges using requirements.txt
-```bash
+```bash=
 pip install -r requirements.txt
 ```
 
@@ -32,6 +35,7 @@ Data should be structured as follows:
 ## Offline Fearture Extracting
 
 You can choose to either extract features offline or do it while training (online).
+Note: Extracting offline doesn't seem to speed up training by a lot.
 
 ```bash=
 python feature_extraction.py  --raw_data /path/to/raw_data --meta_store_path manifest             
@@ -50,19 +54,10 @@ The extracted features will be stored as follows:
 ```
 
 ## Training
-This steps starts training the X-vector model for language identification 
+This step starts training the X-vector model for language identification. Remember to check `config.yaml` for hyperparameters.
 
 ```bash=
-# offline
-# remember to check in `training_xvector.py` the default of `--extract_online` is set to False
-python training_xvector.py --training_feature manifest/training_feat.txt --validation_feature manifest/validation_feat.txt
-                        --input_dim 257 --num_classes 14 --batch_size 256 --num_epochs 50 --save_epoch 10
-                        --use_gpu
-
-# online
-python training_xvector.py --training_meta manifest/training.txt --validation_meta manifest/validation.txt
-                        --input_dim 257 --num_classes 14 --batch_size 256 --num_epochs 50 --save_epoch 10
-                        --use_gpu --extract_online
+python training_xvector.py config.yaml
 ```
 
 ## License

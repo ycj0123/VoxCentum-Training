@@ -7,7 +7,7 @@ Created on Sat May 30 20:22:26 2020
 """
 
 
-import argparse
+import sys
 import os
 
 import numpy as np
@@ -17,6 +17,7 @@ from torch import optim
 from torch.utils.data import DataLoader   
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
+import yaml
 
 from modules.utils import speech_collate
 # from modules.contrastive_loss import ContrastiveLoss
@@ -28,47 +29,26 @@ from modules.feature_dataset import SpeechFeatureDataset
 torch.multiprocessing.set_sharing_strategy('file_system')
 # family = {'Chinese': {1, 5, 6}, 'European': {0, 2, 3, 4}}
 
-
-########## Argument parser
-parser = argparse.ArgumentParser()
-
-## path related
-parser.add_argument('--training_feature',type=str,default='manifest/training_feat.txt')
-parser.add_argument('--validation_feature',type=str, default='manifest/validation_feat.txt')
-parser.add_argument('--training_meta',type=str,default='manifest/training.txt')
-parser.add_argument('--validation_meta',type=str, default='manifest/validation.txt')
-parser.add_argument('--save_path',type=str, default='./save_model')
-
-## config
-parser.add_argument('--input_dim', type=int, default=257)
-parser.add_argument('--num_classes', type=int, default=14)
-parser.add_argument('--batch_size', type=int, default=256)
-parser.add_argument('--spec_len_sec', type=int, default=10)
-parser.add_argument('--num_epochs', type=int, default=10)
-parser.add_argument('--save_epoch', type=int, default=10)
-parser.add_argument('--use_gpu', action="store_true", default=True)
-parser.add_argument('--extract_online', action="store_true", default=True)
-# parser.add_argument('--contrastive_loss', action="store_true", default=False)
-
-args = parser.parse_args()
-
+# with open("config.yaml", "r") as f:
+with open(sys.argv[1], "r") as f:
+    config = yaml.safe_load(f)
 
 ### Data related
-if args.extract_online:
-    dataset_train = SpeechDataset(manifest=args.training_meta,mode='train', spec_len_sec=args.spec_len_sec)
-    dataset_val = SpeechDataset(manifest=args.validation_meta,mode='train', spec_len_sec=args.spec_len_sec)
+if config["extract_online"]:
+    dataset_train = SpeechDataset(manifest=config["training_meta"],mode='train', spec_len_sec=config["sample_sec"])
+    dataset_val = SpeechDataset(manifest=config["validation_meta"],mode='train', spec_len_sec=config["sample_sec"])
 else:
-    dataset_train = SpeechFeatureDataset(manifest=args.training_feature,mode='train')
-    dataset_val = SpeechFeatureDataset(manifest=args.validation_feature,mode='train')
+    dataset_train = SpeechFeatureDataset(manifest=config["training_feature"],mode='train')
+    dataset_val = SpeechFeatureDataset(manifest=config["validation_feature"],mode='train')
 
-dataloader_train = DataLoader(dataset_train, batch_size=args.batch_size,shuffle=True,collate_fn=speech_collate) 
-dataloader_val = DataLoader(dataset_val, batch_size=args.batch_size,shuffle=False,collate_fn=speech_collate) 
+dataloader_train = DataLoader(dataset_train, batch_size=config["batch_size"],shuffle=True,collate_fn=speech_collate) 
+dataloader_val = DataLoader(dataset_val, batch_size=config["batch_size"],shuffle=False,collate_fn=speech_collate) 
 
 
 ## Model related
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
-model = X_vector(args.input_dim, args.num_classes)
+model = X_vector(config["input_dim"], config["num_classes"])
 
 # use multi-GPU if available
 if torch.cuda.device_count() > 1:
@@ -80,7 +60,7 @@ model.to(device)
 
 optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=0.0, betas=(0.9, 0.98), eps=1e-9)
 celoss = nn.CrossEntropyLoss()
-# if args.contrastive_loss:
+# if config["contrastive_loss"]:
 #     contrastive_loss = ContrastiveLoss()
 
 
@@ -100,21 +80,6 @@ def train(dataloader_train,epoch):
         #### CE loss
         loss_1 = celoss(pred_logits,labels)
         loss_2 = 0
-        #### contraastive loss
-        # if args.contrastive_loss:
-        #     y_vec = x_vec.clone().detach()
-        #     y_vec.requires_grad_(False)
-        #     new_order = torch.randperm(y_vec.size()[0])
-        #     y_vec = y_vec[new_order]
-        #     y_labels = labels[new_order]
-        #     contrast_label = (labels != y_labels).long()
-        #     for i in range(len(contrast_label)):
-        #         if contrast_label[i] == 1:
-        #             if labels[i].item() in family['Chinese'] and y_labels[i].item() in family['Chinese']:
-        #                 contrast_label[i] = 0
-        #             elif labels[i].item() in family['European'] and y_labels[i].item() in family['European']:
-        #                 contrast_label[i] = 0
-        #     loss_2 = contrastive_loss(x_vec, y_vec, contrast_label)
         loss  = loss_1 + 0.75*loss_2
         loss.backward()
         optimizer.step()
@@ -131,7 +96,7 @@ def train(dataloader_train,epoch):
             
     mean_acc = accuracy_score(full_gts,full_preds)
     mean_loss = np.mean(np.asarray(train_loss_list))
-    print('Total training loss {} and training Accuracy {} after {} epochs'.format(mean_loss,mean_acc,epoch))
+    print(f'Total training loss {mean_loss:.4} and training accuracy {mean_acc:.4} after {epoch} epochs')
     
 
 def validation(dataloader_val,epoch):
@@ -157,16 +122,16 @@ def validation(dataloader_val,epoch):
                 
         mean_acc = accuracy_score(full_gts,full_preds)
         mean_loss = np.mean(np.asarray(val_loss_list))
-        print('Total validation loss {} and Validation accuracy {} after {} epochs'.format(mean_loss,mean_acc,epoch))
+        print(f'Total validation loss {mean_loss:.4} and validation accuracy {mean_acc:.4} after {epoch} epochs')
         
-        if (epoch+1 % args.save_epoch == 0) or (epoch == args.num_epochs-1):
-            model_save_path = os.path.join(args.save_path, f'checkpoint_{epoch}_{mean_loss:.3f}')
-            os.makedirs(args.save_path, exist_ok=True)
+        if (epoch+1 % config["save_epoch"] == 0) or (epoch == config["num_epochs"]-1):
+            model_save_path = os.path.join(config["save_path"], f'checkpoint_{epoch}_{mean_loss:.4}')
+            os.makedirs(config["save_path"], exist_ok=True)
             state_dict = {'model': model.state_dict(),'optimizer': optimizer.state_dict(),'epoch': epoch}
             torch.save(state_dict, model_save_path)
     
 
 if __name__ == '__main__':
-    for epoch in range(args.num_epochs):
+    for epoch in range(config["num_epochs"]):
         train(dataloader_train,epoch)
         validation(dataloader_val,epoch)

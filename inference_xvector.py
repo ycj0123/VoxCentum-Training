@@ -5,39 +5,33 @@ Created on Sat May 30 20:22:26 2020
 
 @author: krishna, Iuthing
 """
-
-
-
 import torch
-import numpy as np
-from torch.utils.data import DataLoader   
-from modules.feature_dataset import SpeechFeatureDataset
-import torch.nn as nn
-import os
-import numpy as np
-from torch import optim
 import argparse
-from models.x_vector_Indian_LID import X_vector
-from sklearn.metrics import accuracy_score, f1_score
-from modules.utils import speech_collate_pad
-import torch.nn.functional as F
+import numpy as np
 import pandas as pd
-torch.multiprocessing.set_sharing_strategy('file_system')
+import torch.nn as nn
+from torch.utils.data import DataLoader   
+from sklearn.metrics import accuracy_score, f1_score
 
+from modules.utils import speech_collate_pad
+from models.x_vector_Indian_LID import X_vector
+from modules.speech_dataset import SpeechDataset
+
+
+torch.multiprocessing.set_sharing_strategy('file_system')
 
 ########## Argument parser
 parser = argparse.ArgumentParser(add_help=False)
-parser.add_argument('-model_path',type=str, default='checkpoints_0131_75/checkpoint_49_0.1850184296161369')
-parser.add_argument('-testing_filepath',type=str, default='metatest/training_feat.txt')
+parser.add_argument('-model_path',type=str, default='saved_model/checkpoint_9_0.7058')
+parser.add_argument('-testing_meta',type=str, default='metatest_7lang/training.txt')
 
 parser.add_argument('-input_dim', action="store_true", default=257)
-parser.add_argument('-num_classes', action="store_true", default=7)
-parser.add_argument('-batch_size', action="store_true", default=256)
-parser.add_argument('-use_gpu', action="store_true", default=True)
+parser.add_argument('-num_classes', action="store_true", default=14)
+parser.add_argument('-batch_size', action="store_true", default=512)
 args = parser.parse_args()
 
 ### Data related
-dataset_test = SpeechFeatureDataset(manifest=args.testing_filepath,mode='test')
+dataset_test = SpeechDataset(manifest=args.testing_meta,mode='test')
 dataloader_test = DataLoader(dataset_test, batch_size=args.batch_size,shuffle=False,collate_fn=speech_collate_pad) 
 
 ## Model related
@@ -62,7 +56,7 @@ def inference(dataloader_val):
             #### CE loss
             # loss = celoss(pred_logits,labels)
             # val_loss_list.append(loss.item())
-            #train_acc_list.append(accuracy)
+            # train_acc_list.append(accuracy)
             predictions = np.argmax(pred_logits.detach().cpu().numpy(),axis=1)
             for pred in predictions:
                 full_preds.append(pred)
@@ -73,8 +67,8 @@ def inference(dataloader_val):
         mean_acc = accuracy_score(full_gts,full_preds)
         f1s = f1_score(full_gts,full_preds, average=None)
         # mean_loss = np.mean(np.asarray(val_loss_list))
-        print('Total testing accuracy: {}'.format(mean_acc))
-        print('F1 scores for each class: {}'.format(f1s))
+        print(f'Total testing accuracy: {mean_acc:.4}')
+        print(f'F1 scores for each class: {f1s}')
     
 if __name__ == '__main__':
     inference(dataloader_test)
