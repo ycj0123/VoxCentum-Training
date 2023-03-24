@@ -13,13 +13,14 @@ from tqdm import tqdm
 
 from modules import utils
 
-def extract_features(audio_filepath):
-    features = utils.feature_extraction(audio_filepath)
+def extract_features(audio_filepath, spec_len_sec):
+    spec_len = 16000 * spec_len_sec / 160
+    features = utils.feature_extraction(audio_filepath, spec_length=spec_len)
     return features
     
     
 
-def FE_pipeline(feature_list,store_loc,mode):
+def FE_pipeline(feature_list, store_loc, mode, spec_len_sec):
     create_root = os.path.join(store_loc,mode)
     if not os.path.exists(create_root):
         os.makedirs(create_root)
@@ -42,7 +43,7 @@ def FE_pipeline(feature_list,store_loc,mode):
         create_folders = os.path.join(create_root, vid_folder)
         if not os.path.exists(create_folders):
             os.makedirs(create_folders)
-        extract_feats = extract_features(filepath)
+        extract_feats = extract_features(filepath, spec_len_sec)
         dest_filepath = create_folders+'/'+filename[:-4]+'.npy'
         np.save(dest_filepath,extract_feats)
         to_write = dest_filepath+' '+lang_id
@@ -55,17 +56,18 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser("Configuration for data preparation")
     parser.add_argument("--raw_data", default="/mnt/metanas/VoxCentum_stage1", type=str,help='Dataset path')
     parser.add_argument("--meta_store_path", default="manifest", type=str, help='Save directory after processing')
+    parser.add_argument("--spec_len_sec", default=10, type=int)
     config = parser.parse_args()
 
     store_loc = config.raw_data
     read_train = [line.rstrip('\n') for line in open(os.path.join(config.meta_store_path, 'training.txt'))]
-    FE_pipeline(read_train,store_loc,mode='train')
+    FE_pipeline(read_train, store_loc, mode='train', spec_len_sec = config.spec_len_sec)
     
     read_test = [line.rstrip('\n') for line in open(os.path.join(config.meta_store_path, 'testing.txt'))]
-    FE_pipeline(read_test,store_loc,mode='test')
+    FE_pipeline(read_test, store_loc, mode='test', spec_len_sec = config.spec_len_sec)
     
     read_val = [line.rstrip('\n') for line in open(os.path.join(config.meta_store_path, 'validation.txt'))]
-    FE_pipeline(read_val,store_loc,mode='validation')
+    FE_pipeline(read_val, store_loc, mode='validation', spec_len_sec = config.spec_len_sec)
     
     
     

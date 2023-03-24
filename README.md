@@ -55,12 +55,12 @@ This steps starts training the X-vector model for language identification
 ```bash=
 # offline
 # remember to check in `training_xvector.py` the default of `--extract_online` is set to False
-python training_xvector.py --training_feature manifest/training.txt --validation_feature manifest/validation.txt
+python training_xvector.py --training_feature manifest/training_feat.txt --validation_feature manifest/validation_feat.txt
                         --input_dim 257 --num_classes 14 --batch_size 256 --num_epochs 50 --save_epoch 10
                         --use_gpu
 
 # online
-python training_xvector.py --training_feature manifest/training.txt --validation_feature manifest/validation.txt
+python training_xvector.py --training_meta manifest/training.txt --validation_meta manifest/validation.txt
                         --input_dim 257 --num_classes 14 --batch_size 256 --num_epochs 50 --save_epoch 10
                         --use_gpu --extract_online
 ```

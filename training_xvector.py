@@ -43,6 +43,7 @@ parser.add_argument('--save_path',type=str, default='./save_model')
 parser.add_argument('--input_dim', type=int, default=257)
 parser.add_argument('--num_classes', type=int, default=14)
 parser.add_argument('--batch_size', type=int, default=256)
+parser.add_argument('--spec_len_sec', type=int, default=10)
 parser.add_argument('--num_epochs', type=int, default=10)
 parser.add_argument('--save_epoch', type=int, default=10)
 parser.add_argument('--use_gpu', action="store_true", default=True)
@@ -54,8 +55,8 @@ args = parser.parse_args()
 
 ### Data related
 if args.extract_online:
-    dataset_train = SpeechDataset(manifest=args.training_meta,mode='train')
-    dataset_val = SpeechDataset(manifest=args.validation_meta,mode='train')
+    dataset_train = SpeechDataset(manifest=args.training_meta,mode='train', spec_len_sec=args.spec_len_sec)
+    dataset_val = SpeechDataset(manifest=args.validation_meta,mode='train', spec_len_sec=args.spec_len_sec)
 else:
     dataset_train = SpeechFeatureDataset(manifest=args.training_feature,mode='train')
     dataset_val = SpeechFeatureDataset(manifest=args.validation_feature,mode='train')
