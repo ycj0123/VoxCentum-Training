@@ -1,17 +1,17 @@
 # Path related
 # Reads from *_feature if extract_online is False
-training_feature: meta_7lang/training_feat.txt
-validation_feature: meta_7lang/validation_feat.txt
+training_feature: manifest/training_feat.txt
+validation_feature: manifest/validation_feat.txt
 # Reads from *_meta if extract_online is True
-training_meta: meta_7lang/training.txt
-validation_meta: meta_7lang/validation.txt
+training_meta: manifest/training.txt
+validation_meta: manifest/validation.txt
 save_path: ./saved_model
 
 # Configuration
 input_dim: 257
-num_classes: 14
-batch_size: 512
+num_classes: 7
+batch_size: 256
 sample_sec: 5
-num_epochs: 10
-save_epoch: 1
+num_epochs: 50
+save_epoch: 5
 extract_online: True

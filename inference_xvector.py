@@ -22,12 +22,12 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 ########## Argument parser
 parser = argparse.ArgumentParser(add_help=False)
-parser.add_argument('-model_path',type=str, default='saved_model/checkpoint_9_0.7058')
-parser.add_argument('-testing_meta',type=str, default='metatest_7lang/training.txt')
+parser.add_argument('--model_path',type=str, default='saved_model/checkpoint_9_0.4685')
+parser.add_argument('--testing_meta',type=str, default='manifest/testing.txt')
 
-parser.add_argument('-input_dim', action="store_true", default=257)
-parser.add_argument('-num_classes', action="store_true", default=14)
-parser.add_argument('-batch_size', action="store_true", default=512)
+parser.add_argument('--input_dim', action="store_true", default=257)
+parser.add_argument('--num_classes', action="store_true", default=7)
+parser.add_argument('--batch_size', action="store_true", default=512)
 args = parser.parse_args()
 
 ### Data related

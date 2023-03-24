@@ -35,6 +35,7 @@ Data should be structured as follows:
 ## Offline Fearture Extracting
 
 You can choose to either extract features offline or do it while training (online).
+
 Note: Extracting offline doesn't seem to speed up training by a lot.
 
 ```bash=
@@ -58,6 +59,12 @@ This step starts training the X-vector model for language identification. Rememb
 
 ```bash=
 python training_xvector.py config.yaml
+```
+
+## Testing
+
+```bash=
+python inference_xvector.py --model_path path/to/ckpt --testing_meta path/to/manifest --num_classes same_as_training
 ```
 
 ## License

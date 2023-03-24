@@ -124,7 +124,7 @@ def validation(dataloader_val,epoch):
         mean_loss = np.mean(np.asarray(val_loss_list))
         print(f'Total validation loss {mean_loss:.4} and validation accuracy {mean_acc:.4} after {epoch} epochs')
         
-        if (epoch+1 % config["save_epoch"] == 0) or (epoch == config["num_epochs"]-1):
+        if ((epoch+1) % config["save_epoch"] == 0) or (epoch == config["num_epochs"]-1):
             model_save_path = os.path.join(config["save_path"], f'checkpoint_{epoch}_{mean_loss:.4}')
             os.makedirs(config["save_path"], exist_ok=True)
             state_dict = {'model': model.state_dict(),'optimizer': optimizer.state_dict(),'epoch': epoch}
