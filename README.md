@@ -7,8 +7,11 @@ Tutorial : https://www.youtube.com/watch?v=8nZjiXEdMH0
 
 Python version == `3.10.8` is recommended.
 
-Install required packges using requirements.txt
+Install required packages using `requirements.txt`.
 ```bash=
+conda create -n xvector python=3.10.8
+conda activate xvector
+conda install pip
 pip install -r requirements.txt
 ```
 
@@ -20,7 +23,7 @@ This step creates training and testing files.
 python generate_manifest.py --raw_data /path/to/raw_data --meta_store_path manifest 
 ```
 
-Data should be structured as follows:
+Data should be structured as follows (having subfolders under each language is fine):
 
 ```bash=
 ├── /path/to/raw_data

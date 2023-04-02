@@ -19,6 +19,7 @@ from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 from hyperpyyaml import load_hyperpyyaml
 import logging
+import json
 
 from modules.utils import speech_collate
 # from modules.contrastive_loss import ContrastiveLoss
@@ -29,7 +30,7 @@ from modules.feature_dataset import SpeechFeatureDataset
 
 # torch.multiprocessing.set_sharing_strategy('file_system')
 # family = {'Chinese': {1, 5, 6}, 'European': {0, 2, 3, 4}}
-logging.basicConfig(level='DEBUG', format='%(asctime)s [%(levelname)s] - %(message)s',
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
 
 if len(sys.argv) == 1:
@@ -56,16 +57,19 @@ dataloader_val = DataLoader(dataset_val, batch_size = config["val"]["batch_size"
 ## Model related
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
-model = X_vector(config["n_fft"]//2 + 1, config["num_classes"])
+with open(config["class_ids"], "r") as f:
+    class_ids = json.load(f)
+    num_classes = len(class_ids)
+    logging.debug(f"num_class: {num_classes}")
+model = X_vector(config["n_fft"]//2 + 1, num_classes)
 
 # use multi-GPU if available
 if torch.cuda.device_count() > 1:
-  logging.info(f"Using {torch.cuda.device_count()} GPUs!")
-  # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
-  model = nn.DataParallel(model)
+    logging.info(f"Using {torch.cuda.device_count()} GPUs!")
+    # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
+    model = nn.DataParallel(model)
 else:
-  logging.info(f"Using 1 GPU!")
-
+    logging.info(f"Using 1 GPU!")
 model.to(device)
 
 optimizer = config["optimizer"](model.parameters())
@@ -73,6 +77,14 @@ celoss = nn.CrossEntropyLoss()
 # if config["contrastive_loss"]:
 #     contrastive_loss = ContrastiveLoss()
 
+# handle checkpoint
+starting_epoch = -1
+if config['checkpoint'] is not None:
+    ckpt = torch.load(config['checkpoint'])
+    model.load_state_dict(ckpt['model'])
+    optimizer.load_state_dict(ckpt['optimizer'])
+    starting_epoch = ckpt['epoch']
+    logging.info(f'Start training from epoch {starting_epoch+1} with checkpoint "{config["checkpoint"]}".')
 
 def train(dataloader_train,epoch):
     train_loss_list=[]
@@ -106,7 +118,7 @@ def train(dataloader_train,epoch):
             
     mean_acc = accuracy_score(full_gts,full_preds)
     mean_loss = np.mean(np.asarray(train_loss_list))
-    logging.info(f'Total training loss {mean_loss:.4} and training accuracy {mean_acc:.4} after {epoch} epochs')
+    logging.info(f'Total training loss {mean_loss:.4} and training accuracy {mean_acc:.4} after {epoch} epochs.')
     
 
 def validation(dataloader_val,epoch):
@@ -132,16 +144,19 @@ def validation(dataloader_val,epoch):
                 
         mean_acc = accuracy_score(full_gts,full_preds)
         mean_loss = np.mean(np.asarray(val_loss_list))
-        logging.info(f'Total validation loss {mean_loss:.4} and validation accuracy {mean_acc:.4} after {epoch} epochs')
+        logging.info(f'Total validation loss {mean_loss:.4} and validation accuracy {mean_acc:.4} after {epoch} epochs.')
         
         if ((epoch+1) % config["save_epoch"] == 0) or (epoch == config["num_epochs"]-1):
-            model_save_path = os.path.join(config["save_path"], f'checkpoint_{epoch}_{mean_loss:.4}')
+            model_save_path = os.path.join(config["save_path"], f'ckpt_{epoch}_{mean_loss:.4}')
             os.makedirs(config["save_path"], exist_ok=True)
+            logging.info(f'Saving model to {model_save_path}.')
             state_dict = {'model': model.state_dict(),'optimizer': optimizer.state_dict(),'epoch': epoch}
             torch.save(state_dict, model_save_path)
     
 
 if __name__ == '__main__':
     for epoch in range(config["num_epochs"]):
+        if epoch <= starting_epoch:
+            continue
         train(dataloader_train,epoch)
         validation(dataloader_val,epoch)

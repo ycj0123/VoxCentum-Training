@@ -5,7 +5,10 @@ validation_feature: manifest/validation_feat.txt
 # Reads from *_meta if extract_online is True
 training_meta: manifest/training.txt
 validation_meta: manifest/validation.txt
-save_path: ./saved_model
+
+class_ids: manifest/class_ids.json
+checkpoint: null # will keep training if not `null`
+save_path: saved_model
 
 # dataloader
 train:
@@ -17,10 +20,9 @@ val:
 
 # network
 n_fft: 512
-sample_sec: 4
-num_classes: 7 # important!
+sample_sec: 4 # make this smaller if the error says "high<0", max=10 with VoxCentum
 num_epochs: 50
-save_epoch: 5
+save_epoch: 1
 extract_online: True
 
 # optimizer
