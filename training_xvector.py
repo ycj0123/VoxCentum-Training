@@ -17,48 +17,58 @@ from torch import optim
 from torch.utils.data import DataLoader   
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
-import yaml
+from hyperpyyaml import load_hyperpyyaml
+import logging
 
 from modules.utils import speech_collate
 # from modules.contrastive_loss import ContrastiveLoss
-from models.x_vector_Indian_LID import X_vector
+from models.x_vector import X_vector
 from modules.speech_dataset import SpeechDataset
 from modules.feature_dataset import SpeechFeatureDataset
 
 
-torch.multiprocessing.set_sharing_strategy('file_system')
+# torch.multiprocessing.set_sharing_strategy('file_system')
 # family = {'Chinese': {1, 5, 6}, 'European': {0, 2, 3, 4}}
+logging.basicConfig(level='DEBUG', format='%(asctime)s [%(levelname)s] - %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S')
 
-# with open("config.yaml", "r") as f:
+if len(sys.argv) == 1:
+    sys.argv.append("config.yaml")
 with open(sys.argv[1], "r") as f:
-    config = yaml.safe_load(f)
+    config = load_hyperpyyaml(f)
 
 ### Data related
 if config["extract_online"]:
-    dataset_train = SpeechDataset(manifest=config["training_meta"],mode='train', spec_len_sec=config["sample_sec"])
-    dataset_val = SpeechDataset(manifest=config["validation_meta"],mode='train', spec_len_sec=config["sample_sec"])
+    dataset_train = SpeechDataset(manifest=config["training_meta"],mode='train', n_fft=config["n_fft"], spec_len_sec=config["sample_sec"])
+    dataset_val = SpeechDataset(manifest=config["validation_meta"],mode='train', n_fft=config["n_fft"], spec_len_sec=config["sample_sec"])
 else:
     dataset_train = SpeechFeatureDataset(manifest=config["training_feature"],mode='train')
     dataset_val = SpeechFeatureDataset(manifest=config["validation_feature"],mode='train')
 
-dataloader_train = DataLoader(dataset_train, batch_size=config["batch_size"],shuffle=True,collate_fn=speech_collate) 
-dataloader_val = DataLoader(dataset_val, batch_size=config["batch_size"],shuffle=False,collate_fn=speech_collate) 
+dataloader_train = DataLoader(dataset_train, batch_size = config["train"]["batch_size"],
+                              num_workers = config["train"]["num_workers"], shuffle=True,
+                              collate_fn=speech_collate)
+dataloader_val = DataLoader(dataset_val, batch_size = config["val"]["batch_size"],
+                            num_workers = config["val"]["num_workers"], shuffle=False,
+                            collate_fn=speech_collate) 
 
 
 ## Model related
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
-model = X_vector(config["input_dim"], config["num_classes"])
+model = X_vector(config["n_fft"]//2 + 1, config["num_classes"])
 
 # use multi-GPU if available
 if torch.cuda.device_count() > 1:
-  print("Using", torch.cuda.device_count(), "GPUs!")
+  logging.info(f"Using {torch.cuda.device_count()} GPUs!")
   # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
   model = nn.DataParallel(model)
+else:
+  logging.info(f"Using 1 GPU!")
 
 model.to(device)
 
-optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=0.0, betas=(0.9, 0.98), eps=1e-9)
+optimizer = config["optimizer"](model.parameters())
 celoss = nn.CrossEntropyLoss()
 # if config["contrastive_loss"]:
 #     contrastive_loss = ContrastiveLoss()
@@ -86,7 +96,7 @@ def train(dataloader_train,epoch):
         train_loss_list.append(loss.item())
         #train_acc_list.append(accuracy)
         #if i_batch%10==0:
-        #    print('Loss {} after {} iteration'.format(np.mean(np.asarray(train_loss_list)),i_batch))
+        #    logging.info('Loss {} after {} iteration'.format(np.mean(np.asarray(train_loss_list)),i_batch))
         
         predictions = np.argmax(pred_logits.detach().cpu().numpy(),axis=1)
         for pred in predictions:
@@ -96,7 +106,7 @@ def train(dataloader_train,epoch):
             
     mean_acc = accuracy_score(full_gts,full_preds)
     mean_loss = np.mean(np.asarray(train_loss_list))
-    print(f'Total training loss {mean_loss:.4} and training accuracy {mean_acc:.4} after {epoch} epochs')
+    logging.info(f'Total training loss {mean_loss:.4} and training accuracy {mean_acc:.4} after {epoch} epochs')
     
 
 def validation(dataloader_val,epoch):
@@ -122,7 +132,7 @@ def validation(dataloader_val,epoch):
                 
         mean_acc = accuracy_score(full_gts,full_preds)
         mean_loss = np.mean(np.asarray(val_loss_list))
-        print(f'Total validation loss {mean_loss:.4} and validation accuracy {mean_acc:.4} after {epoch} epochs')
+        logging.info(f'Total validation loss {mean_loss:.4} and validation accuracy {mean_acc:.4} after {epoch} epochs')
         
         if ((epoch+1) % config["save_epoch"] == 0) or (epoch == config["num_epochs"]-1):
             model_save_path = os.path.join(config["save_path"], f'checkpoint_{epoch}_{mean_loss:.4}')

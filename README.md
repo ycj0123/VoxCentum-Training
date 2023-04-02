@@ -17,7 +17,7 @@ pip install -r requirements.txt
 This step creates training and testing files.
 
 ```bash=
-python datasets.py --raw_data /path/to/raw_data --meta_store_path manifest 
+python generate_manifest.py --raw_data /path/to/raw_data --meta_store_path manifest 
 ```
 
 Data should be structured as follows:

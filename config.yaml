@@ -7,11 +7,25 @@ training_meta: manifest/training.txt
 validation_meta: manifest/validation.txt
 save_path: ./saved_model
 
-# Configuration
-input_dim: 257
-num_classes: 7
-batch_size: 256
-sample_sec: 5
+# dataloader
+train:
+    num_workers: 12
+    batch_size: 256
+val:
+    num_workers: 12
+    batch_size: 512
+
+# network
+n_fft: 512
+sample_sec: 4
+num_classes: 7 # important!
 num_epochs: 50
 save_epoch: 5
 extract_online: True
+
+# optimizer
+optimizer: !name:torch.optim.Adam
+    lr: 0.001
+    weight_decay: 0.000002
+    betas: (0.9, 0.98)
+    eps: 1e-9

@@ -43,10 +43,10 @@ def feature_extraction(filepath,sr=16000, min_dur_sec=4,win_length=400,hop_lengt
     
     
 ## Used by SpeechDataset
-def load_data(filepath,sr=16000, min_dur_sec=4,win_length=400,hop_length=160, n_mels=40, spec_len=400,mode='train'):
+def load_data(filepath,sr=16000, min_dur_sec=4,win_length=400,hop_length=160, n_fft=512, spec_len=400,mode='train'):
     audio_data = load_wav(filepath, sr=sr,min_dur_sec=min_dur_sec)
     # linear_spect = lin_spectogram_from_wav(audio_data, hop_length, win_length, n_mels)
-    linear_spect = lin_spectogram_from_wav(audio_data, hop_length, win_length, n_fft=512)
+    linear_spect = lin_spectogram_from_wav(audio_data, hop_length, win_length, n_fft=n_fft)
     mag, _ = librosa.magphase(linear_spect)  # magnitude
     mag_T = mag.T
     

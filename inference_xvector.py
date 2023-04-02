@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import accuracy_score, f1_score
 
 from modules.utils import speech_collate_pad
-from models.x_vector_Indian_LID import X_vector
+from models.x_vector import X_vector
 from modules.speech_dataset import SpeechDataset
 
 
