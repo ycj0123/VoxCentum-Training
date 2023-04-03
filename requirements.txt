@@ -4,5 +4,6 @@ nlp2==1.8.48
 numpy==1.23.5
 pandas==1.5.3
 scikit_learn==1.2.2
-torch==1.13.1
+torch==2.0.0
+torchaudio==2.0.1
 tqdm==4.64.1
