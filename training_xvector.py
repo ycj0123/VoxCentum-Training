@@ -20,6 +20,7 @@ from tqdm import tqdm
 from hyperpyyaml import load_hyperpyyaml
 import logging
 import json
+import shutil
 
 from modules.utils import speech_collate_pad
 # from modules.contrastive_loss import ContrastiveLoss
@@ -37,6 +38,8 @@ if len(sys.argv) == 1:
     sys.argv.append("config.yaml")
 with open(sys.argv[1], "r") as f:
     config = load_hyperpyyaml(f)
+os.makedirs(config["save_path"], exist_ok=True)
+shutil.copy(os.path.abspath(sys.argv[1]), os.path.abspath(config["save_path"]))
 
 ### Data related
 if config["extract_online"]:
@@ -157,7 +160,6 @@ def validation(dataloader_val, epoch , best_loss, old_best):
 
         if ((epoch+1) % config["save_epoch"] == 0):
             model_save_path = os.path.join(config["save_path"], f'ckpt_{epoch}_{mean_loss:.4}')
-            os.makedirs(config["save_path"], exist_ok=True)
             logging.info(f'Saving model to {model_save_path}.')
             state_dict = {'model': model.state_dict(),'optimizer': optimizer.state_dict(),'epoch': epoch}
             torch.save(state_dict, model_save_path)
@@ -169,7 +171,6 @@ def validation(dataloader_val, epoch , best_loss, old_best):
         elif mean_loss < best_loss:
             filename = f'ckpt_best_{epoch}_{mean_loss:.4}'
             model_save_path = os.path.join(config["save_path"], filename)
-            os.makedirs(config["save_path"], exist_ok=True)
             logging.info(f'Saving best model to {model_save_path}.')
             state_dict = {'model': model.state_dict(),'optimizer': optimizer.state_dict(),'epoch': epoch}
             torch.save(state_dict, model_save_path)
