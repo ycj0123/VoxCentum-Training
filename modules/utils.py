@@ -15,16 +15,15 @@ def load_wav(audio_filepath, sr, min_dur_sec=4):
         dummy=np.zeros((1,int(min_dur_sec*sr)-len_file))
         extened_wav = np.concatenate((audio_data,dummy[0]))
     else:
-        
         extened_wav = audio_data
     return extened_wav
 
 
-def lin_mel_from_wav(wav, hop_length, win_length, n_mels):
+def mel_spec_from_wav(wav, hop_length, win_length, n_mels):
     linear = librosa.feature.melspectrogram(y=wav, n_mels=n_mels, win_length=win_length, hop_length=hop_length) # mel spectrogram
     return linear.T
 
-def lin_spectogram_from_wav(wav, hop_length, win_length, n_fft=512):
+def lin_spec_from_wav(wav, hop_length, win_length, n_fft=512):
     linear = librosa.stft(wav, n_fft=n_fft, win_length=win_length, hop_length=hop_length) # linear spectrogram
     # output size ≈ (1 + n_fft/2, seconds*sr/hop_length)
     return linear.T
@@ -32,8 +31,8 @@ def lin_spectogram_from_wav(wav, hop_length, win_length, n_fft=512):
 
 def feature_extraction(filepath,sr=16000, min_dur_sec=4,win_length=400,hop_length=160, n_mels=256, spec_len=400,mode='train'):
     audio_data = load_wav(filepath, sr=sr,min_dur_sec=min_dur_sec)
-    # mel_spect = lin_mel_from_wav(audio_data, hop_length, win_length, n_mels)
-    lin_spect = lin_spectogram_from_wav(audio_data, hop_length, win_length, n_fft=512)
+    # mel_spect = mel_spec_from_wav(audio_data, hop_length, win_length, n_mels)
+    lin_spect = lin_spec_from_wav(audio_data, hop_length, win_length, n_fft=512)
     mag, _ = librosa.magphase(lin_spect)  # magnitude
     mag_T = mag.T
     mu = np.mean(mag_T, 0, keepdims=True)
@@ -45,8 +44,8 @@ def feature_extraction(filepath,sr=16000, min_dur_sec=4,win_length=400,hop_lengt
 ## Used by SpeechDataset
 def load_data(filepath,sr=16000, min_dur_sec=4,win_length=400,hop_length=160, n_fft=512, spec_len=400,mode='train'):
     audio_data = load_wav(filepath, sr=sr,min_dur_sec=min_dur_sec)
-    # linear_spect = lin_spectogram_from_wav(audio_data, hop_length, win_length, n_mels)
-    linear_spect = lin_spectogram_from_wav(audio_data, hop_length, win_length, n_fft=n_fft)
+    # linear_spect = mel_spec_from_wav(audio_data, hop_length, win_length, n_mels)
+    linear_spect = lin_spec_from_wav(audio_data, hop_length, win_length, n_fft=n_fft)
     mag, _ = librosa.magphase(linear_spect)  # magnitude
     mag_T = mag.T
     

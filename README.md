@@ -35,7 +35,7 @@ Data should be structured as follows (having subfolders under each language is f
         ...
 ```
 
-## Offline Fearture Extracting
+<!-- ## Offline Fearture Extracting
 
 You can choose to either extract features offline or do it while training (online).
 
@@ -55,7 +55,7 @@ The extracted features will be stored as follows:
         ...
     └── test
         ...
-```
+``` -->
 
 ## Training
 This step starts training the X-vector model for language identification. Remember to check `config.yaml` for hyperparameters.

@@ -1,7 +1,8 @@
 # Path related
 # Reads from *_feature if extract_online is False
-training_feature: manifest/training_feat.txt
-validation_feature: manifest/validation_feat.txt
+# training_feature: manifest/training_feat.txt
+# validation_feature: manifest/validation_feat.txt
+
 # Reads from *_meta if extract_online is True
 training_meta: manifest/training.txt
 validation_meta: manifest/validation.txt
@@ -19,11 +20,16 @@ val:
     batch_size: 512
 
 # network
-n_fft: 512
-sample_sec: 4 # make this smaller if the error says "high<0", max=10 with VoxCentum
 num_epochs: 50
-save_epoch: 1
+save_epoch: 5 # always saves the best checkpoint despite how this number is set
 extract_online: True
+
+# spectrogram
+spectrogram:
+    spec_sec: 4 # make this smaller if the error says "high<0", max=10 should work with VoxCentum
+    n_fft: 512
+    win_length: 400
+    hop_length: 160
 
 # optimizer
 optimizer: !name:torch.optim.Adam

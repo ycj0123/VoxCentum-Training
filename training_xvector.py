@@ -21,7 +21,7 @@ from hyperpyyaml import load_hyperpyyaml
 import logging
 import json
 
-from modules.utils import speech_collate
+from modules.utils import speech_collate_pad
 # from modules.contrastive_loss import ContrastiveLoss
 from models.x_vector import X_vector
 from modules.speech_dataset import SpeechDataset
@@ -40,18 +40,23 @@ with open(sys.argv[1], "r") as f:
 
 ### Data related
 if config["extract_online"]:
-    dataset_train = SpeechDataset(manifest=config["training_meta"],mode='train', n_fft=config["n_fft"], spec_len_sec=config["sample_sec"])
-    dataset_val = SpeechDataset(manifest=config["validation_meta"],mode='train', n_fft=config["n_fft"], spec_len_sec=config["sample_sec"])
+    dataset_train = SpeechDataset(manifest=config["training_meta"],mode='train',
+                                  spec_config=config['spectrogram'])
+    dataset_val = SpeechDataset(manifest=config["validation_meta"],mode='train',
+                                spec_config=config['spectrogram'])
 else:
     dataset_train = SpeechFeatureDataset(manifest=config["training_feature"],mode='train')
     dataset_val = SpeechFeatureDataset(manifest=config["validation_feature"],mode='train')
+# feature = config["feature"]()
+# dataset_train = SpeechDataset(manifest=config["training_meta"], transforms=feature)
+# dataset_val = SpeechDataset(manifest=config["validation_meta"], transforms=feature)
 
 dataloader_train = DataLoader(dataset_train, batch_size = config["train"]["batch_size"],
                               num_workers = config["train"]["num_workers"], shuffle=True,
-                              collate_fn=speech_collate)
+                              collate_fn=speech_collate_pad)
 dataloader_val = DataLoader(dataset_val, batch_size = config["val"]["batch_size"],
                             num_workers = config["val"]["num_workers"], shuffle=False,
-                            collate_fn=speech_collate) 
+                            collate_fn=speech_collate_pad) 
 
 
 ## Model related
@@ -61,7 +66,7 @@ with open(config["class_ids"], "r") as f:
     class_ids = json.load(f)
     num_classes = len(class_ids)
     logging.debug(f"num_class: {num_classes}")
-model = X_vector(config["n_fft"]//2 + 1, num_classes)
+model = X_vector(config['spectrogram']["n_fft"]//2 + 1, num_classes)
 
 # use multi-GPU if available
 if torch.cuda.device_count() > 1:
@@ -85,6 +90,9 @@ if config['checkpoint'] is not None:
     optimizer.load_state_dict(ckpt['optimizer'])
     starting_epoch = ckpt['epoch']
     logging.info(f'Start training from epoch {starting_epoch+1} with checkpoint "{config["checkpoint"]}".')
+else:
+    logging.info(f'Start training from scratch.')
+
 
 def train(dataloader_train,epoch):
     train_loss_list=[]
@@ -121,7 +129,7 @@ def train(dataloader_train,epoch):
     logging.info(f'Total training loss {mean_loss:.4} and training accuracy {mean_acc:.4} after {epoch} epochs.')
     
 
-def validation(dataloader_val,epoch):
+def validation(dataloader_val, epoch , best_loss, old_best):
     model.eval()
     with torch.no_grad():
         val_loss_list=[]
@@ -146,17 +154,42 @@ def validation(dataloader_val,epoch):
         mean_loss = np.mean(np.asarray(val_loss_list))
         logging.info(f'Total validation loss {mean_loss:.4} and validation accuracy {mean_acc:.4} after {epoch} epochs.')
         
-        if ((epoch+1) % config["save_epoch"] == 0) or (epoch == config["num_epochs"]-1):
+
+        if ((epoch+1) % config["save_epoch"] == 0):
             model_save_path = os.path.join(config["save_path"], f'ckpt_{epoch}_{mean_loss:.4}')
             os.makedirs(config["save_path"], exist_ok=True)
             logging.info(f'Saving model to {model_save_path}.')
             state_dict = {'model': model.state_dict(),'optimizer': optimizer.state_dict(),'epoch': epoch}
             torch.save(state_dict, model_save_path)
+            if mean_loss < best_loss:
+                if old_best is not None:
+                    os.remove(os.path.join(config["save_path"], old_best))
+                return mean_loss, None
+
+        elif mean_loss < best_loss:
+            filename = f'ckpt_best_{epoch}_{mean_loss:.4}'
+            model_save_path = os.path.join(config["save_path"], filename)
+            os.makedirs(config["save_path"], exist_ok=True)
+            logging.info(f'Saving best model to {model_save_path}.')
+            state_dict = {'model': model.state_dict(),'optimizer': optimizer.state_dict(),'epoch': epoch}
+            torch.save(state_dict, model_save_path)
+            if old_best is not None:
+                os.remove(os.path.join(config["save_path"], old_best))
+            new_best = filename
+            return mean_loss, new_best
+
+        return mean_loss, old_best
     
 
 if __name__ == '__main__':
+    best_val_loss = 100
+    old_best = None
     for epoch in range(config["num_epochs"]):
         if epoch <= starting_epoch:
             continue
-        train(dataloader_train,epoch)
-        validation(dataloader_val,epoch)
+        train(dataloader_train, epoch)
+        val_loss, new_best = validation(dataloader_val, epoch, best_val_loss, old_best)
+        old_best = new_best
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+

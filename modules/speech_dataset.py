@@ -7,22 +7,29 @@ Created on Sat Jul 20 14:09:31 2019
 """
 import numpy as np
 import torch
+import torchaudio
+import logging
+
 from modules import utils
+
+logger = logging.getLogger(__name__)
 
 class SpeechDataset():
     """Speech dataset."""
 
-    def __init__(self, manifest, mode, n_fft=512, spec_len_sec=0):
+    def __init__(self, manifest, mode, spec_config):
         """
         Read the textfile and get the paths
         """
-        self.mode=mode
+        # self.mode=mode
         self.audio_links = [line.rstrip('\n').split(' ')[0] for line in open(manifest)]
         self.labels = [int(line.rstrip('\n').split(' ')[1]) for line in open(manifest)]
-        self.spec_len = 16000 * spec_len_sec // 160
-        self.n_fft = n_fft
-        
-        
+        self.mode = mode
+        self.n_fft = spec_config['n_fft']
+        self.win_length = spec_config['win_length']
+        self.hop_length = spec_config['hop_length']
+        self.spec_len = spec_config['spec_sec'] * 16000 // self.hop_length
+
 
     def __len__(self):
         return len(self.audio_links)
@@ -31,8 +38,16 @@ class SpeechDataset():
         audio_link =self.audio_links[idx]
         class_id = self.labels[idx]
         #lang_label=lang_id[self.audio_links[idx].split('/')[-2]]
-        spec = utils.load_data(audio_link,mode=self.mode, n_fft=self.n_fft, spec_len=self.spec_len)
+        spec = utils.load_data(audio_link, mode=self.mode, n_fft=self.n_fft,
+                               spec_len=self.spec_len, win_length=self.win_length,
+                               hop_length=self.hop_length)
         sample = (torch.from_numpy(np.ascontiguousarray(spec)), torch.from_numpy(np.ascontiguousarray(class_id)))
+        # spec = utils.load_data(audio_link,mode='train', n_fft=512, spec_len=400)
+        # waveform, sr = torchaudio.load(audio_link)
+        # waveform = torch.mean(waveform, dim=0)
+        # logger.debug(waveform.shape)
+        # feat = self.transforms(waveform)
+        # sample = (feat, torch.from_numpy(np.ascontiguousarray(class_id)))
         return sample
         
     
