@@ -26,8 +26,9 @@ extract_online: True
 
 # spectrogram
 spectrogram:
-    spec_sec: 4 # make this smaller if the error says "high<0", max==10 should work with VoxCentum
     n_fft: 512
+    min_dur_sec: 5
+    spec_sec: 5 # this should not be bigger than min_dur_sec
     win_length: 400
     hop_length: 160
 

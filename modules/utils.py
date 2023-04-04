@@ -43,6 +43,7 @@ def feature_extraction(filepath,sr=16000, min_dur_sec=4,win_length=400,hop_lengt
     
 ## Used by SpeechDataset
 def load_data(filepath,sr=16000, min_dur_sec=4,win_length=400,hop_length=160, n_fft=512, spec_len=400,mode='train'):
+    assert spec_len <= min_dur_sec * sr // hop_length, "min_dur_sec must not be smaller than spec_sec!"
     audio_data = load_wav(filepath, sr=sr,min_dur_sec=min_dur_sec)
     # linear_spect = mel_spec_from_wav(audio_data, hop_length, win_length, n_mels)
     linear_spect = lin_spec_from_wav(audio_data, hop_length, win_length, n_fft=n_fft)
@@ -79,6 +80,7 @@ def speech_collate(batch):
         specs.append(sample[0])
         targets.append((sample[1]))
     return specs, targets
+
 
 def speech_collate_pad(batch):
     targets = []

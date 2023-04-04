@@ -28,6 +28,7 @@ class SpeechDataset():
         self.n_fft = spec_config['n_fft']
         self.win_length = spec_config['win_length']
         self.hop_length = spec_config['hop_length']
+        self.min_dur_sec = spec_config['min_dur_sec']
         self.spec_len = spec_config['spec_sec'] * 16000 // self.hop_length
 
 
@@ -40,7 +41,7 @@ class SpeechDataset():
         #lang_label=lang_id[self.audio_links[idx].split('/')[-2]]
         spec = utils.load_data(audio_link, mode=self.mode, n_fft=self.n_fft,
                                spec_len=self.spec_len, win_length=self.win_length,
-                               hop_length=self.hop_length)
+                               hop_length=self.hop_length, min_dur_sec=self.min_dur_sec)
         sample = (torch.from_numpy(np.ascontiguousarray(spec)), torch.from_numpy(np.ascontiguousarray(class_id)))
         # spec = utils.load_data(audio_link,mode='train', n_fft=512, spec_len=400)
         # waveform, sr = torchaudio.load(audio_link)
