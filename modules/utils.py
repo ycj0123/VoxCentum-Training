@@ -7,6 +7,9 @@ import torch
 #       code from Arsha for loading data.
 # This code extract features for a give audio file
 # ===============================================
+
+## Loading and Transforms
+
 def load_wav(audio_filepath, sr, min_dur_sec=4):
     audio_data,fs  = librosa.load(audio_filepath,sr=16000)
     len_file = len(audio_data)
@@ -28,26 +31,17 @@ def lin_spec_from_wav(wav, hop_length, win_length, n_fft=512):
     # output size ≈ (1 + n_fft/2, seconds*sr/hop_length)
     return linear.T
 
-
-def feature_extraction(filepath,sr=16000, min_dur_sec=4,win_length=400,hop_length=160, n_mels=256, spec_len=400,mode='train'):
-    audio_data = load_wav(filepath, sr=sr,min_dur_sec=min_dur_sec)
-    # mel_spect = mel_spec_from_wav(audio_data, hop_length, win_length, n_mels)
-    lin_spect = lin_spec_from_wav(audio_data, hop_length, win_length, n_fft=512)
-    mag, _ = librosa.magphase(lin_spect)  # magnitude
-    mag_T = mag.T
-    mu = np.mean(mag_T, 0, keepdims=True)
-    std = np.std(mag_T, 0, keepdims=True)
-    return (mag_T - mu) / (std + 1e-5)
-    
-    
+## Dataset and Feature Extraction
     
 ## Used by SpeechDataset
-def load_data(filepath,sr=16000, min_dur_sec=4,win_length=400,hop_length=160, n_fft=512, spec_len=400,mode='train'):
+def load_data(filepath, sr=16000, mel=False, min_dur_sec=4, win_length=400,hop_length=160, n_fft=512, spec_len=400,mode='train', n_mels=128):
     assert spec_len <= min_dur_sec * sr // hop_length, "min_dur_sec must not be smaller than spec_sec!"
     audio_data = load_wav(filepath, sr=sr,min_dur_sec=min_dur_sec)
-    # linear_spect = mel_spec_from_wav(audio_data, hop_length, win_length, n_mels)
-    linear_spect = lin_spec_from_wav(audio_data, hop_length, win_length, n_fft=n_fft)
-    mag, _ = librosa.magphase(linear_spect)  # magnitude
+    if mel ==True:
+        spect = mel_spec_from_wav(audio_data, hop_length, win_length, n_mels)
+    else:
+        spect = lin_spec_from_wav(audio_data, hop_length, win_length, n_fft)
+    mag, _ = librosa.magphase(spect)  # magnitude
     mag_T = mag.T
     
     if mode=='train':
@@ -62,6 +56,17 @@ def load_data(filepath,sr=16000, min_dur_sec=4,win_length=400,hop_length=160, n_
     return (spec_mag - mu) / (std + 1e-5)
     
 
+def feature_extraction(filepath,sr=16000, min_dur_sec=4,win_length=400,hop_length=160, n_mels=256, spec_len=400,mode='train'):
+    audio_data = load_wav(filepath, sr=sr,min_dur_sec=min_dur_sec)
+    # mel_spect = mel_spec_from_wav(audio_data, hop_length, win_length, n_mels)
+    lin_spect = lin_spec_from_wav(audio_data, hop_length, win_length, n_fft=512)
+    mag, _ = librosa.magphase(lin_spect)  # magnitude
+    mag_T = mag.T
+    mu = np.mean(mag_T, 0, keepdims=True)
+    std = np.std(mag_T, 0, keepdims=True)
+    return (mag_T - mu) / (std + 1e-5)
+
+
 ## Used by SpeechFeatureDataset
 def load_npy_data(filepath,spec_len=400,mode='train'):
     mag_T = np.load(filepath)
@@ -72,6 +77,7 @@ def load_npy_data(filepath,spec_len=400,mode='train'):
         spec_mag = mag_T
     return spec_mag
     
+## Collate Functions
 
 def speech_collate(batch):
     targets = []

@@ -26,8 +26,10 @@ extract_online: True
 
 # spectrogram
 spectrogram:
-    n_fft: 512
-    min_dur_sec: 5
+    type: linear # linear or mel
+    n_fft: 512 # used when type == linear
+    n_mels: 256 # used when type == mel
+    min_dur_sec: 5 # will pad every sequence to this length
     spec_sec: 5 # this should not be bigger than min_dur_sec
     win_length: 400
     hop_length: 160

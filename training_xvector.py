@@ -21,6 +21,7 @@ from hyperpyyaml import load_hyperpyyaml
 import logging
 import json
 import shutil
+import time
 
 from modules.utils import speech_collate_pad
 # from modules.contrastive_loss import ContrastiveLoss
@@ -31,7 +32,7 @@ from modules.feature_dataset import SpeechFeatureDataset
 
 # torch.multiprocessing.set_sharing_strategy('file_system')
 # family = {'Chinese': {1, 5, 6}, 'European': {0, 2, 3, 4}}
-logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] - %(message)s',
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s [%(levelname)s] - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
 
 if len(sys.argv) == 1:
@@ -69,7 +70,9 @@ with open(config["class_ids"], "r") as f:
     class_ids = json.load(f)
     num_classes = len(class_ids)
     logging.debug(f"num_class: {num_classes}")
-model = X_vector(config['spectrogram']["n_fft"]//2 + 1, num_classes)
+input_dim = config['spectrogram']["n_mels"] if config['spectrogram']['type'] == 'mel' \
+        else config['spectrogram']["n_fft"]//2 + 1 
+model = X_vector(input_dim, num_classes)
 
 # use multi-GPU if available
 if torch.cuda.device_count() > 1:
@@ -102,8 +105,9 @@ def train(dataloader_train,epoch):
     full_preds=[]
     full_gts=[]
     model.train()
+    start_time = time.time()
     for i_batch, sample_batched in enumerate(tqdm(dataloader_train, desc=f"epoch {epoch}: ")):
-    
+        logging.debug(f"Taking {time.time() - start_time} seconds to load 1 batch")
         features = torch.from_numpy(np.asarray([torch_tensor.numpy().T for torch_tensor in sample_batched[0]])).float()
         labels = torch.from_numpy(np.asarray([torch_tensor[0].numpy() for torch_tensor in sample_batched[1]]))
         features, labels = features.to(device), labels.to(device)
@@ -126,6 +130,8 @@ def train(dataloader_train,epoch):
             full_preds.append(pred)
         for lab in labels.detach().cpu().numpy():
             full_gts.append(lab)
+        
+        start_time = time.time()
             
     mean_acc = accuracy_score(full_gts,full_preds)
     mean_loss = np.mean(np.asarray(train_loss_list))
