@@ -70,5 +70,11 @@ python training_xvector.py config.yaml
 python inference_xvector.py --model_path path/to/ckpt --testing_meta path/to/manifest --num_classes same_as_training
 ```
 
+## TODOs
+
+* Add a Mel-spectrogram option to the config
+* Use torchaudio to load files and add augmentation
+* Add new architecture (ECAPA-TDNN)
+
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
