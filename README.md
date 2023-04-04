@@ -1,4 +1,4 @@
-# x-vector-pytorch
+# X-vector-pytorch
 This repo contains the implementation of the paper "Spoken Language Recognition using X-vectors" in Pytorch
 
 Paper: https://danielpovey.com/files/2018_odyssey_xvector_lid.pdf
@@ -15,7 +15,7 @@ conda install pip
 pip install -r requirements.txt
 ```
 
-## Create manifest files for training and testing
+## Create Manifest Files for Training and Testing
 
 This step creates training and testing files.
 
