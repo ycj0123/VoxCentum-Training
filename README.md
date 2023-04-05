@@ -72,7 +72,6 @@ python inference_xvector.py --model_path path/to/ckpt --testing_meta path/to/man
 
 ## TODOs
 
-* Use torchaudio to load files and add augmentation
 * Add new architecture (ECAPA-TDNN)
 
 ## License
