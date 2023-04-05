@@ -22,17 +22,16 @@ import logging
 import json
 import shutil
 import time
+from collections import OrderedDict
 
 from modules.utils import speech_collate_pad
-# from modules.contrastive_loss import ContrastiveLoss
 from models.x_vector import X_vector
-from modules.speech_dataset import SpeechDataset
-from modules.feature_dataset import SpeechFeatureDataset
+from modules.waveform_dataset import WaveformDataset
 
 
 # torch.multiprocessing.set_sharing_strategy('file_system')
 # family = {'Chinese': {1, 5, 6}, 'European': {0, 2, 3, 4}}
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s [%(levelname)s] - %(message)s',
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
 
 if len(sys.argv) == 1:
@@ -42,18 +41,14 @@ with open(sys.argv[1], "r") as f:
 os.makedirs(config["save_path"], exist_ok=True)
 shutil.copy(os.path.abspath(sys.argv[1]), os.path.abspath(config["save_path"]))
 
+transform_dict = OrderedDict(zip(config['transforms']['names'], config['transforms']['modules']))
+transforms = nn.Sequential(transform_dict)
+
 ### Data related
-if config["extract_online"]:
-    dataset_train = SpeechDataset(manifest=config["training_meta"],mode='train',
-                                  spec_config=config['spectrogram'])
-    dataset_val = SpeechDataset(manifest=config["validation_meta"],mode='train',
-                                spec_config=config['spectrogram'])
-else:
-    dataset_train = SpeechFeatureDataset(manifest=config["training_feature"],mode='train')
-    dataset_val = SpeechFeatureDataset(manifest=config["validation_feature"],mode='train')
-# feature = config["feature"]()
-# dataset_train = SpeechDataset(manifest=config["training_meta"], transforms=feature)
-# dataset_val = SpeechDataset(manifest=config["validation_meta"], transforms=feature)
+dataset_train = WaveformDataset(manifest=config["training_meta"], mode='train',
+                              spec_config=config['spectrogram'], transforms=transforms)
+dataset_val = WaveformDataset(manifest=config["validation_meta"], mode='train',
+                            spec_config=config['spectrogram'], transforms=config['feature'])
 
 dataloader_train = DataLoader(dataset_train, batch_size = config["train"]["batch_size"],
                               num_workers = config["train"]["num_workers"], shuffle=True,

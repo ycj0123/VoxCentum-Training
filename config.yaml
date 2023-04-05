@@ -30,9 +30,31 @@ spectrogram:
     n_fft: 512 # used when type == linear
     n_mels: 256 # used when type == mel
     min_dur_sec: 5 # will pad every sequence to this length
-    spec_sec: 5 # this should not be bigger than min_dur_sec
+    sample_sec: 5 # this should not be bigger than min_dur_sec
+
+feature: !new:torchaudio.transforms.Spectrogram
+    n_fft: !ref <spectrogram[n_fft]>
     win_length: 400
     hop_length: 160
+    power: 1
+    normalized: window # window or frame_length
+
+# timemasking: !new:torchaudio.transforms.TimeMasking
+#     time_mask_param: !ref <spectrogram[sample_sec]> * 16000 // 4
+#     p: 0.5
+
+# freqmasking: !new:torchaudio.transforms.FrequencyMasking
+#     freq_mask_param: !ref <spectrogram[n_fft]> // 8
+
+transforms:
+    names: 
+        - feature
+        # - time_masking
+        # - freq_masking
+    modules:
+        - !ref <feature>
+        # - !ref <timemasking>
+        # - !ref <freqmasking>
 
 # optimizer
 optimizer: !name:torch.optim.Adam

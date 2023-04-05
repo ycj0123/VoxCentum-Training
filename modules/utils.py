@@ -11,7 +11,7 @@ import torch
 ## Loading and Transforms
 
 def load_wav(audio_filepath, sr, min_dur_sec=4):
-    audio_data,fs  = librosa.load(audio_filepath,sr=16000)
+    audio_data, fs  = librosa.load(audio_filepath,sr=16000)
     len_file = len(audio_data)
     
     if len_file <int(min_dur_sec*sr):
@@ -32,10 +32,27 @@ def lin_spec_from_wav(wav, hop_length, win_length, n_fft=512):
     return linear.T
 
 ## Dataset and Feature Extraction
+
+## Used by WaveformDataset
+def load_waveform(filepath, sr=16000, min_dur_sec=4, mode='train', wf_sec=4):
+    wf = load_wav(filepath, sr=sr,min_dur_sec=min_dur_sec)
+    wf_len = wf_sec * sr
     
-## Used by SpeechDataset
+    if mode=='train':
+        try:
+            randtime = np.random.randint(0, wf.shape[0] - wf_len + 1)
+            wf_sample = wf[randtime:randtime + wf_len]
+        except:
+            raise ValueError(f'The shape of wf {wf.shape[0]} <= the sample length {wf_len}.')
+    else:
+        wf_sample = wf
+    wf_sample = torch.from_numpy(wf_sample)
+    
+    return wf_sample
+    
+## Used by SpeechDataset, deprecated
 def load_data(filepath, sr=16000, mel=False, min_dur_sec=4, win_length=400,hop_length=160, n_fft=512, spec_len=400,mode='train', n_mels=128):
-    assert spec_len <= min_dur_sec * sr // hop_length, "min_dur_sec must not be smaller than spec_sec!"
+    assert spec_len <= min_dur_sec * sr // hop_length, "min_dur_sec must not be smaller than sample_sec!"
     audio_data = load_wav(filepath, sr=sr,min_dur_sec=min_dur_sec)
     if mel ==True:
         spect = mel_spec_from_wav(audio_data, hop_length, win_length, n_mels)
@@ -55,7 +72,7 @@ def load_data(filepath, sr=16000, mel=False, min_dur_sec=4, win_length=400,hop_l
     std = np.std(spec_mag, 0, keepdims=True)
     return (spec_mag - mu) / (std + 1e-5)
     
-
+## Deprecated
 def feature_extraction(filepath,sr=16000, min_dur_sec=4,win_length=400,hop_length=160, n_mels=256, spec_len=400,mode='train'):
     audio_data = load_wav(filepath, sr=sr,min_dur_sec=min_dur_sec)
     # mel_spect = mel_spec_from_wav(audio_data, hop_length, win_length, n_mels)
@@ -67,7 +84,7 @@ def feature_extraction(filepath,sr=16000, min_dur_sec=4,win_length=400,hop_lengt
     return (mag_T - mu) / (std + 1e-5)
 
 
-## Used by SpeechFeatureDataset
+## Used by SpeechFeatureDataset, deprecated
 def load_npy_data(filepath,spec_len=400,mode='train'):
     mag_T = np.load(filepath)
     if mode=='train':

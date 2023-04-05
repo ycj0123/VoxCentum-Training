@@ -30,7 +30,7 @@ class SpeechDataset():
         self.win_length = spec_config['win_length']
         self.hop_length = spec_config['hop_length']
         self.min_dur_sec = spec_config['min_dur_sec']
-        self.spec_len = spec_config['spec_sec'] * 16000 // self.hop_length
+        self.spec_len = spec_config['sample_sec'] * 16000 // self.hop_length
 
 
     def __len__(self):
