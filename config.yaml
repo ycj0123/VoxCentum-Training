@@ -9,7 +9,7 @@ validation_meta: manifest/validation.txt
 
 class_ids: manifest/class_ids.json
 checkpoint: null # will keep training if not `null`
-save_path: saved_model
+save_path: saved_model # actual name will be mmdd_savepath
 
 # dataloader
 train:
@@ -20,7 +20,7 @@ val:
     batch_size: 512
 
 # network
-num_epochs: 50
+num_epochs: 10
 save_epoch: 5 # always saves the best checkpoint despite how this number is set
 extract_online: True
 
@@ -32,6 +32,12 @@ spectrogram:
     min_dur_sec: 5 # will pad every sequence to this length
     sample_sec: 5 # this should not be bigger than min_dur_sec
 
+# feature
+# prefix usage:
+# "!new:" construct instance on run
+# "!name:" need to call explicitly in code to construct instance
+# "!ref" alias system
+# See https://github.com/speechbrain/HyperPyYAML for more usage of HyperPyYaml
 feature: !new:torchaudio.transforms.Spectrogram
     n_fft: !ref <spectrogram[n_fft]>
     win_length: 400

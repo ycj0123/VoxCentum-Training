@@ -14,7 +14,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch import optim
-from torch.utils.data import DataLoader   
+from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter 
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 from hyperpyyaml import load_hyperpyyaml
@@ -23,6 +24,7 @@ import json
 import shutil
 import time
 from collections import OrderedDict
+import datetime
 
 from modules.utils import speech_collate_pad
 from models.x_vector import X_vector
@@ -38,8 +40,11 @@ if len(sys.argv) == 1:
     sys.argv.append("config.yaml")
 with open(sys.argv[1], "r") as f:
     config = load_hyperpyyaml(f)
-os.makedirs(config["save_path"], exist_ok=True)
-shutil.copy(os.path.abspath(sys.argv[1]), os.path.abspath(config["save_path"]))
+now = datetime.datetime.now()
+savepath = f'{now.strftime("%m%d_%H%M")}_{config["save_path"]}'
+os.makedirs(savepath, exist_ok=True)
+shutil.copy(os.path.abspath(sys.argv[1]), os.path.abspath(savepath))
+writer = SummaryWriter(log_dir=f'{savepath}/log')
 
 transform_dict = OrderedDict(zip(config['transforms']['names'], config['transforms']['modules']))
 transforms = nn.Sequential(transform_dict)
@@ -95,7 +100,7 @@ else:
     logging.info(f'Start training from scratch.')
 
 
-def train(dataloader_train,epoch):
+def train(dataloader_train, epoch):
     train_loss_list=[]
     full_preds=[]
     full_gts=[]
@@ -130,10 +135,12 @@ def train(dataloader_train,epoch):
             
     mean_acc = accuracy_score(full_gts,full_preds)
     mean_loss = np.mean(np.asarray(train_loss_list))
+    writer.add_scalar("Loss/train", mean_loss, global_step=epoch)
+    writer.add_scalar("Accuracy/train", mean_acc, global_step=epoch)
     logging.info(f'Total training loss {mean_loss:.4} and training accuracy {mean_acc:.4} after {epoch} epochs.')
     
 
-def validation(dataloader_val, epoch , best_loss, old_best):
+def validation(dataloader_val, epoch, best_loss, old_best):
     model.eval()
     with torch.no_grad():
         val_loss_list=[]
@@ -156,27 +163,29 @@ def validation(dataloader_val, epoch , best_loss, old_best):
                 
         mean_acc = accuracy_score(full_gts,full_preds)
         mean_loss = np.mean(np.asarray(val_loss_list))
+        writer.add_scalar("Loss/validation", mean_loss, global_step=epoch)
+        writer.add_scalar("Accuracy/validation", mean_acc, global_step=epoch)
         logging.info(f'Total validation loss {mean_loss:.4} and validation accuracy {mean_acc:.4} after {epoch} epochs.')
         
 
         if ((epoch+1) % config["save_epoch"] == 0):
-            model_save_path = os.path.join(config["save_path"], f'ckpt_{epoch}_{mean_loss:.4}')
+            model_save_path = os.path.join(savepath, f'ckpt_{epoch}_{mean_loss:.4}')
             logging.info(f'Saving model to {model_save_path}.')
             state_dict = {'model': model.state_dict(),'optimizer': optimizer.state_dict(),'epoch': epoch}
             torch.save(state_dict, model_save_path)
             if mean_loss < best_loss:
                 if old_best is not None:
-                    os.remove(os.path.join(config["save_path"], old_best))
+                    os.remove(os.path.join(savepath, old_best))
                 return mean_loss, None
 
         elif mean_loss < best_loss:
             filename = f'ckpt_best_{epoch}_{mean_loss:.4}'
-            model_save_path = os.path.join(config["save_path"], filename)
+            model_save_path = os.path.join(savepath, filename)
             logging.info(f'Saving best model to {model_save_path}.')
             state_dict = {'model': model.state_dict(),'optimizer': optimizer.state_dict(),'epoch': epoch}
             torch.save(state_dict, model_save_path)
             if old_best is not None:
-                os.remove(os.path.join(config["save_path"], old_best))
+                os.remove(os.path.join(savepath, old_best))
             new_best = filename
             return mean_loss, new_best
 
@@ -195,3 +204,5 @@ if __name__ == '__main__':
         if val_loss < best_val_loss:
             best_val_loss = val_loss
 
+writer.flush()
+writer.close()

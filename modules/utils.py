@@ -111,7 +111,7 @@ def speech_collate_pad(batch):
     longest = max(batch, key=lambda sample: sample[0].shape[1])
     max_len = longest[0].shape[1]
     for sample in batch:
-        new_sample = torch.zeros((sample[0].shape[0]), max_len, dtype=sample[0].dtype, device=sample[0].device)
+        new_sample = torch.zeros((sample[0].shape[0]), max_len, dtype=sample[0].dtype)
         new_sample[:, :sample[0].shape[1]] = sample[0]
         specs.append(new_sample)
         targets.append(sample[1])

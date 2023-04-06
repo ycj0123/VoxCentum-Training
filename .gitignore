@@ -134,5 +134,5 @@ metatest
 manifest*
 *.csv
 *deprecated*
-saved_model*
+*saved_model*
 .vscode
