@@ -24,52 +24,58 @@ num_epochs: 50
 save_epoch: 5 # always saves the best checkpoint despite this number
 extract_online: True
 
-# spectrogram
-spectrogram:
-    n_fft: 512
-    win_length: 400
-    hop_length: 160
-    power: 1
-    min_dur_sec: 5 # pad every sequence to this length
-    sample_sec: 5 # should not be bigger than min_dur_sec
-    n_mels: 64 # used by MelSpectrogram and MFCC_Delta
-    n_mfcc: 13  # used by MFCC_Delta
+# optimizer
+optimizer: !name:torch.optim.Adam
+    lr: 5e-4
+    weight_decay: 0.000002
+    betas: (0.9, 0.98)
+    eps: 1e-9
+
+# feature params
+n_fft: 512
+win_length: 400
+hop_length: 160
+power: 1
+min_dur_sec: 5 # pad every sequence to this length
+sample_sec: 5 # should not be bigger than min_dur_sec
+n_mels: 64 # used by MelSpectrogram and MFCC_Delta
+n_mfcc: 13  # used by MFCC_Delta
 
 # ========== <feature: uncomment to use feature> ==========
 
 # feature: !new:torchaudio.transforms.Spectrogram
-#     n_fft: !ref <spectrogram[n_fft]>
-#     win_length: !ref <spectrogram[win_length]>
-#     hop_length: !ref <spectrogram[hop_length]>
-#     power: !ref <spectrogram[power]>
+#     n_fft: !ref <n_fft>
+#     win_length: !ref <win_length>
+#     hop_length: !ref <hop_length>
+#     power: !ref <power>
 #     normalized: window # window or frame_length
 
 # feature: !new:torchaudio.transforms.MelSpectrogram
-#     n_fft: !ref <spectrogram[n_fft]>
-#     n_mels: !ref <spectrogram[n_mels]>
-#     win_length: !ref <spectrogram[win_length]>
-#     hop_length: !ref <spectrogram[hop_length]>
-#     power: !ref <spectrogram[power]>
+#     n_fft: !ref <n_fft>
+#     n_mels: !ref <n_mels>
+#     win_length: !ref <win_length>
+#     hop_length: !ref <hop_length>
+#     power: !ref <power>
 
 feature: !new:modules.mfcc.MFCC_Delta
     mfcckwargs:
-        n_mfcc: !ref <spectrogram[n_mfcc]>
+        n_mfcc: !ref <n_mfcc>
         melkwargs:
-            n_fft: !ref <spectrogram[n_fft]>
-            n_mels: !ref <spectrogram[n_mels]>
-            win_length: !ref <spectrogram[win_length]>
-            hop_length: !ref <spectrogram[hop_length]>
-            power: !ref <spectrogram[power]>
+            n_fft: !ref <n_fft>
+            n_mels: !ref <n_mels>
+            win_length: !ref <win_length>
+            hop_length: !ref <hop_length>
+            power: !ref <power>
 
 #  ====================== </feature> ======================
 
 # data augmentation
 # timemasking: !new:torchaudio.transforms.TimeMasking
-#     time_mask_param: !ref <spectrogram[sample_sec]> * 16000 // 4
+#     time_mask_param: !ref <sample_sec> * 16000 // 4
 #     p: 0.5
 
 # freqmasking: !new:torchaudio.transforms.FrequencyMasking
-#     freq_mask_param: !ref <spectrogram[n_fft]> // 8
+#     freq_mask_param: !ref <n_fft> // 8
 
 # combine feature with data augmentation
 transforms:
@@ -81,10 +87,3 @@ transforms:
         - !ref <feature>
         # - !ref <timemasking>
         # - !ref <freqmasking>
-
-# optimizer
-optimizer: !name:torch.optim.Adam
-    lr: 0.001
-    weight_decay: 0.000002
-    betas: (0.9, 0.98)
-    eps: 1e-9

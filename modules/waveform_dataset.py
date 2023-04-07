@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class WaveformDataset():
     """Speech dataset."""
 
-    def __init__(self, manifest, mode, spec_config=None, transforms=None):
+    def __init__(self, manifest, mode, min_dur_sec=None, wf_sec=None, transforms=None):
         """
         Read the textfile and get the paths
         """
@@ -26,9 +26,8 @@ class WaveformDataset():
         self.labels = [int(line.rstrip('\n').split(' ')[1]) for line in open(manifest)]
         self.mode = mode
         if mode == 'train':
-            assert spec_config is not None, "Need spec_config in training mode."
-            self.min_dur_sec = spec_config['min_dur_sec']
-            self.wf_sec = spec_config['sample_sec']
+            self.min_dur_sec = min_dur_sec
+            self.wf_sec = wf_sec
         self.transforms = transforms
 
     def __len__(self):

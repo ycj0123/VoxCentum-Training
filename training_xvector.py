@@ -48,14 +48,14 @@ os.makedirs(savepath, exist_ok=True)
 shutil.copy(os.path.abspath(sys.argv[1]), os.path.abspath(savepath))
 writer = SummaryWriter(log_dir=f'{savepath}/log')
 
+# Data related
 transform_dict = OrderedDict(zip(config['transforms']['names'], config['transforms']['modules']))
 transforms = nn.Sequential(transform_dict)
 
-# Data related
 dataset_train = WaveformDataset(manifest=config["training_meta"], mode='train',
-                                spec_config=config['spectrogram'], transforms=transforms)
+                                min_dur_sec=config["min_dur_sec"], wf_sec=config["sample_sec"], transforms=transforms)
 dataset_val = WaveformDataset(manifest=config["validation_meta"], mode='train',
-                              spec_config=config['spectrogram'], transforms=config['feature'])
+                              min_dur_sec=config["min_dur_sec"], wf_sec=config["sample_sec"], transforms=config['feature'])
 
 dataloader_train = DataLoader(dataset_train, batch_size=config["train"]["batch_size"],
                               num_workers=config["train"]["num_workers"], shuffle=True,
@@ -63,7 +63,6 @@ dataloader_train = DataLoader(dataset_train, batch_size=config["train"]["batch_s
 dataloader_val = DataLoader(dataset_val, batch_size=config["val"]["batch_size"],
                             num_workers=config["val"]["num_workers"], shuffle=False,
                             collate_fn=speech_collate_pad)
-
 
 # Model related
 use_cuda = torch.cuda.is_available()
@@ -73,11 +72,11 @@ with open(config["class_ids"], "r") as f:
     num_classes = len(class_ids)
     logging.debug(f"num_class: {num_classes}")
 if isinstance(config['feature'], T.MelSpectrogram):
-    input_dim = config['spectrogram']["n_mels"]
+    input_dim = config["n_mels"]
 elif isinstance(config['feature'], T.Spectrogram):
-    input_dim = config['spectrogram']["n_fft"]//2 + 1
+    input_dim = config["n_fft"]//2 + 1
 elif isinstance(config['feature'], MFCC_Delta):
-    input_dim = config['spectrogram']["n_mfcc"] * 3
+    input_dim = config["n_mfcc"] * 3
 else:
     raise TypeError("config['feature'] must be one of Spectrogram, MelSpectrogram or MFCC_Delta")
 model = X_vector(input_dim, num_classes)
