@@ -25,7 +25,9 @@ import shutil
 import time
 from collections import OrderedDict
 import datetime
+from torchaudio import transforms as T
 
+from modules.mfcc import MFCC_Delta
 from modules.utils import speech_collate_pad
 from models.x_vector import X_vector
 from modules.waveform_dataset import WaveformDataset
@@ -70,8 +72,14 @@ with open(config["class_ids"], "r") as f:
     class_ids = json.load(f)
     num_classes = len(class_ids)
     logging.debug(f"num_class: {num_classes}")
-input_dim = config['spectrogram']["n_mels"] if config['spectrogram']['type'] == 'mel' \
-        else config['spectrogram']["n_fft"]//2 + 1 
+if isinstance(config['feature'], T.MelSpectrogram):
+    input_dim = config['spectrogram']["n_mels"]
+elif isinstance(config['feature'], T.Spectrogram):
+    input_dim = config['spectrogram']["n_fft"]//2 + 1
+elif isinstance(config['feature'], MFCC_Delta):
+    input_dim = config['spectrogram']["n_mfcc"] * 3
+else:
+    raise TypeError("config['feature'] must be one of Spectrogram, MelSpectrogram or MFCC_Delta")
 model = X_vector(input_dim, num_classes)
 
 # use multi-GPU if available

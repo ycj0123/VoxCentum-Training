@@ -42,7 +42,7 @@ class WaveformDataset():
                                         min_dur_sec=self.min_dur_sec, wf_sec=self.wf_sec)
         else:
             waveform = utils.load_waveform(audio_link, mode='test')
-        waveform = torch.unsqueeze(waveform, 0)
+        waveform = torch.unsqueeze(waveform, 0).float()
         if self.transforms:
             feat = self.transforms(waveform)
         else:

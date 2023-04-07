@@ -1,12 +1,12 @@
-# Path related
-# Reads from *_feature if extract_online is False
-# training_feature: manifest/training_feat.txt
-# validation_feature: manifest/validation_feat.txt
+# HyperPyYaml prefix usage:
+# "!new:" class: construct instance automatically
+# "!name:" function/class: call manually to construct class instance
+# "!ref" alias system
+# See https://github.com/speechbrain/HyperPyYAML for more
 
-# Reads from *_meta if extract_online is True
+# Path related
 training_meta: manifest/training.txt
 validation_meta: manifest/validation.txt
-
 class_ids: manifest/class_ids.json
 checkpoint: null # will keep training if not `null`
 save_path: saved_model # actual name will be mmdd_savepath
@@ -20,31 +20,50 @@ val:
     batch_size: 512
 
 # network
-num_epochs: 10
-save_epoch: 5 # always saves the best checkpoint despite how this number is set
+num_epochs: 50
+save_epoch: 5 # always saves the best checkpoint despite this number
 extract_online: True
 
 # spectrogram
 spectrogram:
-    type: linear # linear or mel
-    n_fft: 512 # used when type == linear
-    n_mels: 256 # used when type == mel
-    min_dur_sec: 5 # will pad every sequence to this length
-    sample_sec: 5 # this should not be bigger than min_dur_sec
-
-# feature
-# prefix usage:
-# "!new:" construct instance on run
-# "!name:" need to call explicitly in code to construct instance
-# "!ref" alias system
-# See https://github.com/speechbrain/HyperPyYAML for more usage of HyperPyYaml
-feature: !new:torchaudio.transforms.Spectrogram
-    n_fft: !ref <spectrogram[n_fft]>
+    n_fft: 512
     win_length: 400
     hop_length: 160
     power: 1
-    normalized: window # window or frame_length
+    min_dur_sec: 5 # pad every sequence to this length
+    sample_sec: 5 # should not be bigger than min_dur_sec
+    n_mels: 64 # used by MelSpectrogram and MFCC_Delta
+    n_mfcc: 13  # used by MFCC_Delta
 
+# ========== <feature: uncomment to use feature> ==========
+
+# feature: !new:torchaudio.transforms.Spectrogram
+#     n_fft: !ref <spectrogram[n_fft]>
+#     win_length: !ref <spectrogram[win_length]>
+#     hop_length: !ref <spectrogram[hop_length]>
+#     power: !ref <spectrogram[power]>
+#     normalized: window # window or frame_length
+
+# feature: !new:torchaudio.transforms.MelSpectrogram
+#     n_fft: !ref <spectrogram[n_fft]>
+#     n_mels: !ref <spectrogram[n_mels]>
+#     win_length: !ref <spectrogram[win_length]>
+#     hop_length: !ref <spectrogram[hop_length]>
+#     power: !ref <spectrogram[power]>
+
+feature: !new:modules.mfcc.MFCC_Delta
+    mfcckwargs:
+        n_mfcc: !ref <spectrogram[n_mfcc]>
+        melkwargs:
+            n_fft: !ref <spectrogram[n_fft]>
+            n_mels: !ref <spectrogram[n_mels]>
+            win_length: !ref <spectrogram[win_length]>
+            hop_length: !ref <spectrogram[hop_length]>
+            power: !ref <spectrogram[power]>
+
+#  ====================== </feature> ======================
+
+# data augmentation
 # timemasking: !new:torchaudio.transforms.TimeMasking
 #     time_mask_param: !ref <spectrogram[sample_sec]> * 16000 // 4
 #     p: 0.5
@@ -52,6 +71,7 @@ feature: !new:torchaudio.transforms.Spectrogram
 # freqmasking: !new:torchaudio.transforms.FrequencyMasking
 #     freq_mask_param: !ref <spectrogram[n_fft]> // 8
 
+# combine feature with data augmentation
 transforms:
     names: 
         - feature
