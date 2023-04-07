@@ -13,6 +13,7 @@ from modules import utils
 
 logger = logging.getLogger(__name__)
 
+
 class SpeechDataset():
     """Speech dataset."""
 
@@ -32,14 +33,13 @@ class SpeechDataset():
         self.min_dur_sec = spec_config['min_dur_sec']
         self.spec_len = spec_config['sample_sec'] * 16000 // self.hop_length
 
-
     def __len__(self):
         return len(self.audio_links)
 
     def __getitem__(self, idx):
-        audio_link =self.audio_links[idx]
+        audio_link = self.audio_links[idx]
         class_id = self.labels[idx]
-        #lang_label=lang_id[self.audio_links[idx].split('/')[-2]]
+        # lang_label=lang_id[self.audio_links[idx].split('/')[-2]]
         spec = utils.load_data(audio_link, mode=self.mode, mel=self.mel, n_fft=self.n_fft,
                                spec_len=self.spec_len, win_length=self.win_length,
                                hop_length=self.hop_length, min_dur_sec=self.min_dur_sec,
@@ -52,5 +52,3 @@ class SpeechDataset():
         # feat = self.transforms(waveform)
         # sample = (feat, torch.from_numpy(np.ascontiguousarray(class_id)))
         return sample
-        
-    

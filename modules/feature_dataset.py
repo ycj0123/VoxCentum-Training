@@ -9,6 +9,7 @@ import numpy as np
 import torch
 from modules import utils
 
+
 class SpeechFeatureDataset():
     """Speech dataset."""
 
@@ -16,20 +17,17 @@ class SpeechFeatureDataset():
         """
         Read the textfile and get the paths
         """
-        self.mode=mode
+        self.mode = mode
         self.npy_files = [line.rstrip('\n').split(' ')[0] for line in open(manifest)]
         self.labels = [int(line.rstrip('\n').split(' ')[1]) for line in open(manifest)]
-        
 
     def __len__(self):
         return len(self.npy_files)
 
     def __getitem__(self, idx):
-        npy_filepath =self.npy_files[idx]
+        npy_filepath = self.npy_files[idx]
         class_id = self.labels[idx]
-        #lang_label=lang_id[self.audio_links[idx].split('/')[-2]]
-        spec = utils.load_npy_data(npy_filepath,mode=self.mode)
+        # lang_label=lang_id[self.audio_links[idx].split('/')[-2]]
+        spec = utils.load_npy_data(npy_filepath, mode=self.mode)
         sample = (torch.from_numpy(np.ascontiguousarray(spec)), torch.from_numpy(np.ascontiguousarray(class_id)))
         return sample
-        
-    

@@ -13,6 +13,7 @@ from modules import utils
 
 logger = logging.getLogger(__name__)
 
+
 class WaveformDataset():
     """Speech dataset."""
 
@@ -34,12 +35,12 @@ class WaveformDataset():
         return len(self.audio_links)
 
     def __getitem__(self, idx):
-        audio_link =self.audio_links[idx]
+        audio_link = self.audio_links[idx]
         class_id = self.labels[idx]
         # spec = utils.load_data(audio_link,mode='train', n_fft=512, spec_len=400)
         if self.mode == 'train':
-            waveform = utils.load_waveform(audio_link, mode='train', 
-                                        min_dur_sec=self.min_dur_sec, wf_sec=self.wf_sec)
+            waveform = utils.load_waveform(audio_link, mode='train',
+                                           min_dur_sec=self.min_dur_sec, wf_sec=self.wf_sec)
         else:
             waveform = utils.load_waveform(audio_link, mode='test')
         waveform = torch.unsqueeze(waveform, 0).float()
@@ -50,5 +51,3 @@ class WaveformDataset():
         feat = torch.squeeze(feat)
         sample = (feat, torch.from_numpy(np.ascontiguousarray(class_id)))
         return sample
-        
-    
