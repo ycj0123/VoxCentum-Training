@@ -28,12 +28,12 @@ import datetime
 from torchaudio import transforms as T
 
 from modules.mfcc import MFCC_Delta
-from modules.utils import speech_collate_pad
-from models.x_vector import X_vector
+from modules.utils import speech_collate
+from models.x_vector_conv1d import X_vector
 from modules.waveform_dataset import WaveformDataset
 
 
-# torch.multiprocessing.set_sharing_strategy('file_system')
+torch.multiprocessing.set_sharing_strategy('file_system')
 # family = {'Chinese': {1, 5, 6}, 'European': {0, 2, 3, 4}}
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
@@ -59,18 +59,18 @@ dataset_val = WaveformDataset(manifest=config["validation_meta"], mode='train',
 
 dataloader_train = DataLoader(dataset_train, batch_size=config["train"]["batch_size"],
                               num_workers=config["train"]["num_workers"], shuffle=True,
-                              collate_fn=speech_collate_pad)
+                              collate_fn=speech_collate)
 dataloader_val = DataLoader(dataset_val, batch_size=config["val"]["batch_size"],
                             num_workers=config["val"]["num_workers"], shuffle=False,
-                            collate_fn=speech_collate_pad)
+                            collate_fn=speech_collate)
 
 # Model related
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 with open(config["class_ids"], "r") as f:
     class_ids = json.load(f)
-    num_classes = len(class_ids)
-    logging.debug(f"num_class: {num_classes}")
+    num_class = len(class_ids)
+    logging.debug(f"num_class: {num_class}")
 if isinstance(config['feature'], T.MelSpectrogram):
     input_dim = config["n_mels"]
 elif isinstance(config['feature'], T.Spectrogram):
@@ -79,15 +79,19 @@ elif isinstance(config['feature'], MFCC_Delta):
     input_dim = config["n_mfcc"] * 3
 else:
     raise TypeError("config['feature'] must be one of Spectrogram, MelSpectrogram or MFCC_Delta")
-model = X_vector(input_dim, num_classes)
+logging.debug(f"input_dim: {input_dim}")
+model = X_vector(input_dim, num_class)
+logging.info(model)
 
 # use multi-GPU if available
 if torch.cuda.device_count() > 1:
     logging.info(f"Using {torch.cuda.device_count()} GPUs!")
     # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
     model = nn.DataParallel(model)
-else:
+elif torch.cuda.device_count() == 1:
     logging.info(f"Using 1 GPU!")
+else:
+    logging.info(f'Using CPU!')
 model.to(device)
 
 optimizer = config["optimizer"](model.parameters())
@@ -115,7 +119,8 @@ def train(dataloader_train, epoch):
     start_time = time.time()
     for i_batch, sample_batched in enumerate(tqdm(dataloader_train, desc=f"epoch {epoch}: ")):
         logging.debug(f"Taking {time.time() - start_time} seconds to load 1 batch")
-        features = torch.from_numpy(np.asarray([torch_tensor.numpy().T for torch_tensor in sample_batched[0]])).float()
+        # features = torch.from_numpy(np.asarray([torch_tensor.numpy().T for torch_tensor in sample_batched[0]])).float()
+        features = torch.from_numpy(np.asarray([torch_tensor.numpy() for torch_tensor in sample_batched[0]])).float()
         labels = torch.from_numpy(np.asarray([torch_tensor[0].numpy() for torch_tensor in sample_batched[1]]))
         features, labels = features.to(device), labels.to(device)
         features.requires_grad = True
@@ -154,8 +159,10 @@ def validation(dataloader_val, epoch, best_loss, old_best):
         full_preds = []
         full_gts = []
         for i_batch, sample_batched in enumerate(tqdm(dataloader_val, desc=f"epoch {epoch} val: ")):
+            # features = torch.from_numpy(np.asarray(
+            #     [torch_tensor.numpy().T for torch_tensor in sample_batched[0]])).float()
             features = torch.from_numpy(np.asarray(
-                [torch_tensor.numpy().T for torch_tensor in sample_batched[0]])).float()
+                [torch_tensor.numpy() for torch_tensor in sample_batched[0]])).float()
             labels = torch.from_numpy(np.asarray([torch_tensor[0].numpy() for torch_tensor in sample_batched[1]]))
             features, labels = features.to(device), labels.to(device)
             pred_logits, x_vec = model(features)
