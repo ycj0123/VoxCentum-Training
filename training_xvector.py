@@ -28,8 +28,7 @@ import datetime
 from torchaudio import transforms as T
 
 from modules.mfcc import MFCC_Delta
-from modules.utils import speech_collate
-from models.x_vector_conv1d import X_vector
+from modules.utils import speech_collate, count_parameters
 from modules.waveform_dataset import WaveformDataset
 
 
@@ -80,8 +79,10 @@ elif isinstance(config['feature'], MFCC_Delta):
 else:
     raise TypeError("config['feature'] must be one of Spectrogram, MelSpectrogram or MFCC_Delta")
 logging.debug(f"input_dim: {input_dim}")
-model = X_vector(input_dim, num_class)
-logging.info(model)
+model = config['model'](input_dim, num_class)
+logging.debug(model)
+logging.info(f'Training model: {model.__class__.__name__}.')
+logging.info(f'Model parameters: {count_parameters(model):,}')
 
 # use multi-GPU if available
 if torch.cuda.device_count() > 1:
@@ -118,7 +119,7 @@ def train(dataloader_train, epoch):
     model.train()
     start_time = time.time()
     for i_batch, sample_batched in enumerate(tqdm(dataloader_train, desc=f"epoch {epoch}: ")):
-        logging.debug(f"Taking {time.time() - start_time} seconds to load 1 batch")
+        # logging.debug(f"Taking {time.time() - start_time} seconds to load 1 batch")
         # features = torch.from_numpy(np.asarray([torch_tensor.numpy().T for torch_tensor in sample_batched[0]])).float()
         features = torch.from_numpy(np.asarray([torch_tensor.numpy() for torch_tensor in sample_batched[0]])).float()
         labels = torch.from_numpy(np.asarray([torch_tensor[0].numpy() for torch_tensor in sample_batched[1]]))

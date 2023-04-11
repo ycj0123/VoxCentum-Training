@@ -19,7 +19,7 @@ from hyperpyyaml import load_hyperpyyaml
 from tqdm import tqdm
 
 from modules.utils import speech_collate_pad
-from models.x_vector_conv1d import X_vector
+from models.x_vector import X_vector
 from modules.waveform_dataset import WaveformDataset
 
 
@@ -50,10 +50,10 @@ dataloader_test = DataLoader(dataset_test, batch_size=args.batch_size, shuffle=F
 # Model related
 with open(class_ids_path, "r") as f:
     class_ids = json.load(f)
-    num_classes = len(class_ids)
+    num_class = len(class_ids)
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
-model = X_vector(args.input_dim, num_classes).to(device)
+model = config['model'](args.input_dim, num_class).to(device)
 saved = torch.load(args.model_path)
 model.load_state_dict(saved['model'])
 celoss = nn.CrossEntropyLoss()

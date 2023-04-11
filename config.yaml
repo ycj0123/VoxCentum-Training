@@ -20,6 +20,8 @@ val:
     batch_size: 512
 
 # network
+model: !name:models.ecapa_tdnn.ECAPA_TDNN
+# model: !name:models.x_vector.X_vector
 num_epochs: 50
 save_epoch: 5 # always saves the best checkpoint despite this number
 extract_online: True

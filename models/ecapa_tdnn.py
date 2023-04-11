@@ -133,19 +133,19 @@ class FbankAug(nn.Module):
 
 class ECAPA_TDNN(nn.Module):
 
-    def __init__(self, C):
+    def __init__(self, input_dim, num_class, C=512):
 
         super(ECAPA_TDNN, self).__init__()
 
-        self.torchfbank = torch.nn.Sequential(
-            PreEmphasis(),
-            torchaudio.transforms.MelSpectrogram(sample_rate=16000, n_fft=512, win_length=400, hop_length=160,
-                                                 f_min=20, f_max=7600, window_fn=torch.hamming_window, n_mels=80),
-        )
+        # self.torchfbank = torch.nn.Sequential(
+        #     PreEmphasis(),
+        #     torchaudio.transforms.MelSpectrogram(sample_rate=16000, n_fft=512, win_length=400, hop_length=160,
+        #                                          f_min=20, f_max=7600, window_fn=torch.hamming_window, n_mels=80),
+        # )
 
-        self.specaug = FbankAug()  # Spec augmentation
+        # self.specaug = FbankAug()  # Spec augmentation
 
-        self.conv1 = nn.Conv1d(80, C, kernel_size=5, stride=1, padding=2)
+        self.conv1 = nn.Conv1d(input_dim, C, kernel_size=5, stride=1, padding=2)
         self.relu = nn.ReLU()
         self.bn1 = nn.BatchNorm1d(C)
         self.layer1 = Bottle2neck(C, C, kernel_size=3, dilation=2, scale=8)
@@ -164,14 +164,15 @@ class ECAPA_TDNN(nn.Module):
         self.bn5 = nn.BatchNorm1d(3072)
         self.fc6 = nn.Linear(3072, 192)
         self.bn6 = nn.BatchNorm1d(192)
+        self.output = nn.Linear(192, num_class)
 
-    def forward(self, x, aug):
-        with torch.no_grad():
-            x = self.torchfbank(x)+1e-6
-            x = x.log()
-            x = x - torch.mean(x, dim=-1, keepdim=True)
-            if aug == True:
-                x = self.specaug(x)
+    def forward(self, x):
+        # with torch.no_grad():
+        #     x = self.torchfbank(x)+1e-6
+        #     x = x.log()
+        #     x = x - torch.mean(x, dim=-1, keepdim=True)
+        #     if aug == True:
+        #         x = self.specaug(x)
 
         x = self.conv1(x)
         x = self.relu(x)
@@ -197,6 +198,8 @@ class ECAPA_TDNN(nn.Module):
         x = torch.cat((mu, sg), 1)
         x = self.bn5(x)
         x = self.fc6(x)
-        x = self.bn6(x)
+        embedding = self.bn6(x)
 
-        return x
+        preds = self.output(embedding)
+
+        return preds, embedding
