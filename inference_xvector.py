@@ -19,7 +19,7 @@ from hyperpyyaml import load_hyperpyyaml
 from tqdm import tqdm
 
 from modules.utils import speech_collate_pad
-from models.x_vector import X_vector
+from models.x_vector_conv1d import X_vector
 from modules.waveform_dataset import WaveformDataset
 
 
@@ -27,13 +27,13 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 # Argument parser
 parser = argparse.ArgumentParser()
-parser.add_argument('-t', '--training_dir', type=str, default='saved_model_power1')
-parser.add_argument('-m', '--model_path', type=str, default='saved_model_power1/ckpt_best_42_0.1365')
+parser.add_argument('-t', '--training_dir', type=str, default='0411_2055_saved_model_conv_mfcc5e-4')
+parser.add_argument('-m', '--model_path', type=str, default='0411_2055_saved_model_conv_mfcc5e-4/ckpt_best_46_0.1407')
 parser.add_argument('-f', '--manifest_dir', type=str, default='manifest')
 parser.add_argument('-o', '--output_path', type=str, default='output.csv')
 
-parser.add_argument('-d', '--input_dim', action="store_true", default=257)  # (n_fft // 2 + 1) or n_mel
-parser.add_argument('-b', '--batch_size', action="store_true", default=256)
+parser.add_argument('-d', '--input_dim', action="store_true", default=39)  # (n_fft // 2 + 1) or n_mel or 39
+parser.add_argument('-b', '--batch_size', action="store_true", default=512)
 args = parser.parse_args()
 
 # path related
@@ -67,7 +67,7 @@ def inference(dataloader_val):
         full_gts = []
         for i_batch, sample_batched in enumerate(tqdm(dataloader_val)):
             features = torch.from_numpy(
-                np.stack([torch_tensor.numpy().T for torch_tensor in sample_batched[0]], axis=0)).float()
+                np.stack([torch_tensor.numpy() for torch_tensor in sample_batched[0]], axis=0)).float()
             labels = torch.from_numpy(np.asarray([torch_tensor[0].numpy() for torch_tensor in sample_batched[1]]))
             features, labels = features.to(device), labels.to(device)
             pred_logits, x_vec = model(features)
