@@ -33,7 +33,7 @@ def FE_pipeline(feature_list, store_loc, mode, spec_len_sec):
     else:
         print('Unknown mode')
     
-    for row in tqdm(feature_list, desc=mode):
+    for row in tqdm(feature_list, desc=mode, dynamic_ncols=True):
         filepath = row.split(' ')[0]
         lang_id = row.split(' ')[1]
         vid_folder = filepath.split('/')[-2]

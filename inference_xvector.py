@@ -65,7 +65,7 @@ def inference(dataloader_val):
         val_loss_list = []
         full_preds = []
         full_gts = []
-        for i_batch, sample_batched in enumerate(tqdm(dataloader_val)):
+        for i_batch, sample_batched in enumerate(tqdm(dataloader_val, dynamic_ncols=True)):
             features = torch.from_numpy(
                 np.stack([torch_tensor.numpy() for torch_tensor in sample_batched[0]], axis=0)).float()
             labels = torch.from_numpy(np.asarray([torch_tensor[0].numpy() for torch_tensor in sample_batched[1]]))

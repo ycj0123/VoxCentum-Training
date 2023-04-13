@@ -58,10 +58,10 @@ dataset_val = WaveformDataset(manifest=config["validation_meta"], mode='train',
 
 dataloader_train = DataLoader(dataset_train, batch_size=config["train"]["batch_size"],
                               num_workers=config["train"]["num_workers"], shuffle=True,
-                              collate_fn=speech_collate)
+                              collate_fn=speech_collate, pin_memory=True)
 dataloader_val = DataLoader(dataset_val, batch_size=config["val"]["batch_size"],
                             num_workers=config["val"]["num_workers"], shuffle=False,
-                            collate_fn=speech_collate)
+                            collate_fn=speech_collate, pin_memory=True)
 
 # Model related
 use_cuda = torch.cuda.is_available()
@@ -118,7 +118,7 @@ def train(dataloader_train, epoch):
     full_gts = []
     model.train()
     start_time = time.time()
-    for i_batch, sample_batched in enumerate(tqdm(dataloader_train, desc=f"epoch {epoch}: ")):
+    for i, sample_batched in enumerate(tqdm(dataloader_train, desc=f"epoch {epoch}: ", dynamic_ncols=True)):
         # logging.debug(f"Taking {time.time() - start_time} seconds to load 1 batch")
         # features = torch.from_numpy(np.asarray([torch_tensor.numpy().T for torch_tensor in sample_batched[0]])).float()
         features = torch.from_numpy(np.asarray([torch_tensor.numpy() for torch_tensor in sample_batched[0]])).float()
@@ -128,9 +128,7 @@ def train(dataloader_train, epoch):
         optimizer.zero_grad()
         pred_logits, x_vec = model(features)  # x_vec = B x Dim
         # CE loss
-        loss_1 = celoss(pred_logits, labels)
-        loss_2 = 0
-        loss = loss_1 + 0.75*loss_2
+        loss = celoss(pred_logits, labels)
         loss.backward()
         optimizer.step()
         train_loss_list.append(loss.item())
@@ -159,7 +157,7 @@ def validation(dataloader_val, epoch, best_loss, old_best):
         val_loss_list = []
         full_preds = []
         full_gts = []
-        for i_batch, sample_batched in enumerate(tqdm(dataloader_val, desc=f"epoch {epoch} val: ")):
+        for i_batch, sample_batched in enumerate(tqdm(dataloader_val, desc=f"epoch {epoch} val: ", dynamic_ncols=True)):
             # features = torch.from_numpy(np.asarray(
             #     [torch_tensor.numpy().T for torch_tensor in sample_batched[0]])).float()
             features = torch.from_numpy(np.asarray(
