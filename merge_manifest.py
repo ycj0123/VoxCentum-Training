@@ -2,9 +2,11 @@ import numpy as np
 import json
 import os
 
-manifests = ['/home/itk0123/x-vector-pytorch/manifest_stage1_0_8',
-            '/home/itk0123/x-vector-pytorch/manifest_stage2_0_8']
-output_folder = '/home/itk0123/x-vector-pytorch/manifest_stage1&2_0_8'
+manifests = ['/home/ycj0123/x-vector-pytorch/manifest_stage1',
+            '/home/ycj0123/x-vector-pytorch/manifest_stage2',
+            '/home/ycj0123/x-vector-pytorch/manifest_gl',
+            '/home/ycj0123/x-vector-pytorch/manifest_stage3']
+output_folder = '/home/ycj0123/x-vector-pytorch/manifest_all'
 os.makedirs(output_folder, exist_ok=True)
 
 

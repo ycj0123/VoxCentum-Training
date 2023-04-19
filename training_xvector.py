@@ -104,7 +104,10 @@ celoss = nn.CrossEntropyLoss()
 starting_epoch = -1
 if config['checkpoint'] is not None:
     ckpt = torch.load(config['checkpoint'])
-    model.load_state_dict(ckpt['model'])
+    if torch.cuda.device_count() > 1:
+        model.module.load_state_dict(ckpt['model'])
+    else:
+        model.load_state_dict(ckpt['model'])
     optimizer.load_state_dict(ckpt['optimizer'])
     starting_epoch = ckpt['epoch']
     logging.info(f'Start training from epoch {starting_epoch+1} with checkpoint "{config["checkpoint"]}".')
