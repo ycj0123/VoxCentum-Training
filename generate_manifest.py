@@ -63,7 +63,10 @@ def extract_split_files(folder_path, valid_frac, test_frac):
         
         lang_train, other = random_split(all_list, valid_frac+test_frac)
         larger = max(valid_frac, test_frac)
-        lang_val, lang_test = random_split(other, larger/(valid_frac+test_frac))
+        if larger > 0:
+            lang_val, lang_test = random_split(other, larger/(valid_frac+test_frac))
+        else:
+            lang_val, lang_test = [], []
         train_list += lang_train
         val_list += lang_val
         test_list += lang_test
