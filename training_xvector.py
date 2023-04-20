@@ -87,7 +87,6 @@ logging.info(f'Model parameters: {count_parameters(model):,}')
 # use multi-GPU if available
 if torch.cuda.device_count() > 1:
     logging.info(f"Using {torch.cuda.device_count()} GPUs!")
-    # dim = 0 [30, xxx] -> [10, ...], [10, ...], [10, ...] on 3 GPUs
     model = nn.DataParallel(model)
 elif torch.cuda.device_count() == 1:
     logging.info(f"Using 1 GPU!")
@@ -188,7 +187,10 @@ def validation(dataloader_val, epoch, best_loss, old_best):
         if ((epoch+1) % config["save_epoch"] == 0):
             model_save_path = os.path.join(savepath, f'ckpt_{epoch}_{mean_loss:.4}')
             logging.info(f'Saving model to {model_save_path}.')
-            state_dict = {'model': model.state_dict(), 'optimizer': optimizer.state_dict(), 'epoch': epoch}
+            if torch.cuda.device_count() > 1:
+                state_dict = {'model': model.module.state_dict(), 'optimizer': optimizer.state_dict(), 'epoch': epoch}
+            else:
+                state_dict = {'model': model.state_dict(), 'optimizer': optimizer.state_dict(), 'epoch': epoch}
             torch.save(state_dict, model_save_path)
             if mean_loss < best_loss:
                 if old_best is not None:

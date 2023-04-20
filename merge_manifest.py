@@ -4,7 +4,7 @@ import os
 
 manifests = ['/home/ycj0123/x-vector-pytorch/manifest_stage1',
             '/home/ycj0123/x-vector-pytorch/manifest_stage2',
-            '/home/ycj0123/x-vector-pytorch/manifest_gl',
+            '/home/ycj0123/x-vector-pytorch/manifest_stage2_home',
             '/home/ycj0123/x-vector-pytorch/manifest_stage3']
 output_folder = '/home/ycj0123/x-vector-pytorch/manifest_all'
 os.makedirs(output_folder, exist_ok=True)
