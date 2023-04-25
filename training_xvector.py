@@ -201,7 +201,10 @@ def validation(dataloader_val, epoch, best_loss, old_best):
             filename = f'ckpt_best_{epoch}_{mean_loss:.4}'
             model_save_path = os.path.join(savepath, filename)
             logging.info(f'Saving best model to {model_save_path}.')
-            state_dict = {'model': model.state_dict(), 'optimizer': optimizer.state_dict(), 'epoch': epoch}
+            if torch.cuda.device_count() > 1:
+                state_dict = {'model': model.module.state_dict(), 'optimizer': optimizer.state_dict(), 'epoch': epoch}
+            else:
+                state_dict = {'model': model.state_dict(), 'optimizer': optimizer.state_dict(), 'epoch': epoch}
             torch.save(state_dict, model_save_path)
             if old_best is not None:
                 os.remove(os.path.join(savepath, old_best))
