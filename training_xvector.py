@@ -23,9 +23,7 @@ import logging
 import json
 import shutil
 import time
-from more_itertools import consume
 from collections import OrderedDict
-from collections.abc import Iterator
 import datetime
 from torchaudio import transforms as T
 
@@ -124,14 +122,7 @@ def train(dataloader_train, epoch):
     full_gts = []
     model.train()
     start_time = time.time()
-    bar = tqdm(dataloader_train, desc=f"epoch {epoch}: ", dynamic_ncols=True)
-    # for i, sample_batched in enumerate(tqdm(dataloader_train, desc=f"epoch {epoch}: ", dynamic_ncols=True)):
-    for i, sample_batched in enumerate(bar):
-        # if i <= start_step:
-            # consume(bar, start_step)
-            # logging.debug(f"Taking {time.time() - start_time} seconds to load 1 batch")
-            # start_time = time.time()
-            # continue
+    for i, sample_batched in enumerate(tqdm(dataloader_train, desc=f"epoch {epoch}: ", dynamic_ncols=True)):
         logging.debug(f"Taking {time.time() - start_time} seconds to load 1 batch")
         features = torch.from_numpy(np.asarray([torch_tensor.numpy() for torch_tensor in sample_batched[0]])).float()
         labels = torch.from_numpy(np.asarray([torch_tensor[0].numpy() for torch_tensor in sample_batched[1]]))
@@ -162,12 +153,11 @@ def train(dataloader_train, epoch):
         
         start_time = time.time()
 
-    if len(full_preds) > 0:
-        mean_acc = accuracy_score(full_gts, full_preds)
-        mean_loss = np.mean(np.asarray(train_loss_list))
-        writer.add_scalar("Loss/train", mean_loss, global_step=epoch)
-        writer.add_scalar("Accuracy/train", mean_acc, global_step=epoch)
-        logging.info(f'Total training loss {mean_loss:.4} and training accuracy {mean_acc:.4} after {epoch} epochs.')
+    mean_acc = accuracy_score(full_gts, full_preds)
+    mean_loss = np.mean(np.asarray(train_loss_list))
+    writer.add_scalar("Loss/train", mean_loss, global_step=epoch)
+    writer.add_scalar("Accuracy/train", mean_acc, global_step=epoch)
+    logging.info(f'Total training loss {mean_loss:.4} and training accuracy {mean_acc:.4} after {epoch} epochs.')
 
 
 def validation(dataloader_val, epoch, best_loss, old_best):
