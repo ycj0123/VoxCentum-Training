@@ -23,7 +23,9 @@ import logging
 import json
 import shutil
 import time
+from more_itertools import consume
 from collections import OrderedDict
+from collections.abc import Iterator
 import datetime
 from torchaudio import transforms as T
 
@@ -100,7 +102,8 @@ celoss = nn.CrossEntropyLoss()
 #     contrastive_loss = ContrastiveLoss()
 
 # handle checkpoint
-starting_epoch = -1
+start_epoch = -1
+start_step = -1
 if config['checkpoint'] is not None:
     ckpt = torch.load(config['checkpoint'])
     if torch.cuda.device_count() > 1:
@@ -108,8 +111,9 @@ if config['checkpoint'] is not None:
     else:
         model.load_state_dict(ckpt['model'])
     optimizer.load_state_dict(ckpt['optimizer'])
-    starting_epoch = ckpt['epoch']
-    logging.info(f'Start training from epoch {starting_epoch+1} with checkpoint "{config["checkpoint"]}".')
+    start_epoch = ckpt['epoch']
+    start_step = ckpt['step']
+    logging.info(f'Start training from epoch {start_epoch+1} with checkpoint "{config["checkpoint"]}".')
 else:
     logging.info(f'Start training from scratch.')
 
@@ -120,9 +124,15 @@ def train(dataloader_train, epoch):
     full_gts = []
     model.train()
     start_time = time.time()
-    for i, sample_batched in enumerate(tqdm(dataloader_train, desc=f"epoch {epoch}: ", dynamic_ncols=True)):
-        # logging.debug(f"Taking {time.time() - start_time} seconds to load 1 batch")
-        # features = torch.from_numpy(np.asarray([torch_tensor.numpy().T for torch_tensor in sample_batched[0]])).float()
+    bar = tqdm(dataloader_train, desc=f"epoch {epoch}: ", dynamic_ncols=True)
+    # for i, sample_batched in enumerate(tqdm(dataloader_train, desc=f"epoch {epoch}: ", dynamic_ncols=True)):
+    for i, sample_batched in enumerate(bar):
+        # if i <= start_step:
+            # consume(bar, start_step)
+            # logging.debug(f"Taking {time.time() - start_time} seconds to load 1 batch")
+            # start_time = time.time()
+            # continue
+        logging.debug(f"Taking {time.time() - start_time} seconds to load 1 batch")
         features = torch.from_numpy(np.asarray([torch_tensor.numpy() for torch_tensor in sample_batched[0]])).float()
         labels = torch.from_numpy(np.asarray([torch_tensor[0].numpy() for torch_tensor in sample_batched[1]]))
         features, labels = features.to(device), labels.to(device)
@@ -144,13 +154,20 @@ def train(dataloader_train, epoch):
         for lab in labels.detach().cpu().numpy():
             full_gts.append(lab)
 
+        if config['save_step'] is not None:
+            if ((i+1) % config["save_step"] == 0):
+                mean_loss = np.mean(np.asarray(train_loss_list))
+                model_save_path = os.path.join(savepath, f'ckpt_{epoch}_{i}_{mean_loss:.4}')
+                save_checkpoint(model, optimizer, epoch, model_save_path, step=i)
+        
         start_time = time.time()
 
-    mean_acc = accuracy_score(full_gts, full_preds)
-    mean_loss = np.mean(np.asarray(train_loss_list))
-    writer.add_scalar("Loss/train", mean_loss, global_step=epoch)
-    writer.add_scalar("Accuracy/train", mean_acc, global_step=epoch)
-    logging.info(f'Total training loss {mean_loss:.4} and training accuracy {mean_acc:.4} after {epoch} epochs.')
+    if len(full_preds) > 0:
+        mean_acc = accuracy_score(full_gts, full_preds)
+        mean_loss = np.mean(np.asarray(train_loss_list))
+        writer.add_scalar("Loss/train", mean_loss, global_step=epoch)
+        writer.add_scalar("Accuracy/train", mean_acc, global_step=epoch)
+        logging.info(f'Total training loss {mean_loss:.4} and training accuracy {mean_acc:.4} after {epoch} epochs.')
 
 
 def validation(dataloader_val, epoch, best_loss, old_best):
@@ -184,28 +201,19 @@ def validation(dataloader_val, epoch, best_loss, old_best):
         logging.info(
             f'Total validation loss {mean_loss:.4} and validation accuracy {mean_acc:.4} after {epoch} epochs.')
 
-        if ((epoch+1) % config["save_epoch"] == 0):
-            model_save_path = os.path.join(savepath, f'ckpt_{epoch}_{mean_loss:.4}')
-            logging.info(f'Saving model to {model_save_path}.')
-            if torch.cuda.device_count() > 1:
-                state_dict = {'model': model.module.state_dict(), 'optimizer': optimizer.state_dict(), 'epoch': epoch}
-            else:
-                state_dict = {'model': model.state_dict(), 'optimizer': optimizer.state_dict(), 'epoch': epoch}
-            torch.save(state_dict, model_save_path)
-            if mean_loss < best_loss:
-                if old_best is not None:
-                    os.remove(os.path.join(savepath, old_best))
-                return mean_loss, None
+        if config["save_epoch"] is not None and config["save_step"] is None:
+            if ((epoch+1) % config["save_epoch"] == 0):
+                model_save_path = os.path.join(savepath, f'ckpt_{epoch}_{mean_loss:.4}')
+                save_checkpoint(model, optimizer, epoch, model_save_path)
+                if mean_loss < best_loss:
+                    if old_best is not None:
+                        os.remove(os.path.join(savepath, old_best))
+                    return mean_loss, None
 
         elif mean_loss < best_loss:
             filename = f'ckpt_best_{epoch}_{mean_loss:.4}'
             model_save_path = os.path.join(savepath, filename)
-            logging.info(f'Saving best model to {model_save_path}.')
-            if torch.cuda.device_count() > 1:
-                state_dict = {'model': model.module.state_dict(), 'optimizer': optimizer.state_dict(), 'epoch': epoch}
-            else:
-                state_dict = {'model': model.state_dict(), 'optimizer': optimizer.state_dict(), 'epoch': epoch}
-            torch.save(state_dict, model_save_path)
+            save_checkpoint(model, optimizer, epoch, model_save_path)
             if old_best is not None:
                 os.remove(os.path.join(savepath, old_best))
             new_best = filename
@@ -214,11 +222,22 @@ def validation(dataloader_val, epoch, best_loss, old_best):
         return mean_loss, old_best
 
 
+def save_checkpoint(model, opt, epoch, save_path, step=-1):
+    logging.info(f'Saving model to {save_path}.')
+    if step != -1:
+        epoch -= 1
+    if torch.cuda.device_count() > 1:
+        state_dict = {'model': model.module.state_dict(), 'optimizer': opt.state_dict(), 'epoch': epoch, 'step': step}
+    else:
+        state_dict = {'model': model.state_dict(), 'optimizer': opt.state_dict(), 'epoch': epoch, 'step': step}
+    torch.save(state_dict, save_path)
+
+
 if __name__ == '__main__':
     best_val_loss = 100
     old_best = None
     for epoch in range(config["num_epochs"]):
-        if epoch <= starting_epoch:
+        if epoch <= start_epoch:
             continue
         train(dataloader_train, epoch)
         val_loss, new_best = validation(dataloader_val, epoch, best_val_loss, old_best)

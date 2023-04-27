@@ -14,16 +14,19 @@ save_path: saved_model # actual name will be mmdd_savepath
 # dataloader
 train:
     num_workers: 0
-    batch_size: 512
+    batch_size: 256
 val:
     num_workers: 0
-    batch_size: 1024
+    batch_size: 512
 
 # network
 model: !name:models.ecapa_tdnn.ECAPA_TDNN
 # model: !name:models.x_vector.X_vector
 num_epochs: 50
-save_epoch: 2 # always saves the best checkpoint despite this number
+# always saves the best valid checkpoint despite save_epoch and save_step
+# save_step is prioritized
+save_epoch: 1
+save_step: null # int or `null`
 
 # optimizer
 optimizer: !name:torch.optim.Adam
