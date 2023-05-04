@@ -27,9 +27,9 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 # Argument parser
 parser = argparse.ArgumentParser()
-parser.add_argument('-t', '--training_dir', type=str, default='0411_2055_saved_model_conv_mfcc5e-4')
-parser.add_argument('-m', '--model_path', type=str, default='0411_2055_saved_model_conv_mfcc5e-4/ckpt_best_46_0.1407')
-parser.add_argument('-f', '--manifest_dir', type=str, default='manifest')
+parser.add_argument('-t', '--training_dir', type=str, default='0426_1714_saved_model')
+parser.add_argument('-m', '--model_path', type=str, default='0426_1714_saved_model/ckpt_9_0.285')
+parser.add_argument('-f', '--manifest_dir', type=str, default='manifest_test')
 parser.add_argument('-o', '--output_path', type=str, default='output.csv')
 
 parser.add_argument('-d', '--input_dim', action="store_true", default=39)  # (n_fft // 2 + 1) or n_mel or 39
@@ -57,14 +57,17 @@ model = config['model'](args.input_dim, num_class).to(device)
 saved = torch.load(args.model_path)
 model.load_state_dict(saved['model'])
 celoss = nn.CrossEntropyLoss(reduction='none')
+id_classes = {v: k for k, v in class_ids.items()}
 
 
 def inference(dataloader_test):
     model.eval()
     with torch.no_grad():
-        full_losses = []
-        full_preds = []
-        full_gts = []
+        full_preds = np.array([], dtype=int)
+        full_pred_labels = []
+        full_gts = np.array([], dtype=int)
+        full_gt_labels = []
+        full_losses = np.array([])
         for i_batch, sample_batched in enumerate(tqdm(dataloader_test, dynamic_ncols=True)):
             features = torch.from_numpy(
                 np.stack([torch_tensor.numpy() for torch_tensor in sample_batched[0]], axis=0)).float()
@@ -74,10 +77,15 @@ def inference(dataloader_test):
             predictions = np.argmax(pred_logits.detach().cpu().numpy(), axis=1)
             losses = celoss(pred_logits, labels)
 
-            full_preds = np.concatenate(full_preds, predictions)
-            full_gts = np.concatenate(full_gts, labels.detach().cpu().numpy())
-            full_losses = np.concatenate(full_losses, losses.detach().cpu().numpy())
-        df = pd.DataFrame(data={"Predictions": full_preds, "Ground Truth": full_gts, "Loss": full_losses})
+            full_preds = np.concatenate((full_preds, predictions))
+            full_pred_labels += [id_classes[i] for i in predictions]
+            full_gts = np.concatenate((full_gts, labels.detach().cpu().numpy()))
+            full_gt_labels += [id_classes[i] for i in labels.detach().cpu().numpy()]
+            full_losses = np.concatenate((full_losses, losses.detach().cpu().numpy()))
+        # full_losses = np.around(full_losses, decimals=5)
+        df = pd.DataFrame(data={"Predictions": full_preds, "Predictions Code": full_pred_labels,
+                          "Ground Truth": full_gts, "Ground Truth Code": full_gt_labels, "Loss": full_losses})
+        df.sort_values(by=['Ground Truth', 'Loss'], ascending=[True, False], inplace=True)
         df.to_csv(args.output_path)
         mean_acc = accuracy_score(full_gts, full_preds)
         f1s = f1_score(full_gts, full_preds, average=None)
