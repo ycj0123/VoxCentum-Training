@@ -104,11 +104,21 @@ start_epoch = -1
 start_step = -1
 if config['checkpoint'] is not None:
     ckpt = torch.load(config['checkpoint'])
-    if torch.cuda.device_count() > 1:
-        model.module.load_state_dict(ckpt['model'])
-    else:
-        model.load_state_dict(ckpt['model'])
-    optimizer.load_state_dict(ckpt['optimizer'])
+    try:
+        if torch.cuda.device_count() > 1:
+            model.module.load_state_dict(ckpt['model'])
+        else:
+            model.load_state_dict(ckpt['model'])
+        optimizer.load_state_dict(ckpt['optimizer'])
+    except:
+        # load without the last layer
+        del ckpt['model']['output.weight']
+        del ckpt['model']['output.bias']
+        if torch.cuda.device_count() > 1:
+            model.module.load_state_dict(ckpt['model'], strict=False)
+        else:
+            model.load_state_dict(ckpt['model'], strict=False)
+        optimizer.load_state_dict(ckpt['optimizer'])
     start_epoch = ckpt['epoch']
     start_step = ckpt['step']
     logging.info(f'Start training from epoch {start_epoch+1} with checkpoint "{config["checkpoint"]}".')

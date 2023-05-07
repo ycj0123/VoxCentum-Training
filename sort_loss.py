@@ -27,17 +27,17 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 # Argument parser
 parser = argparse.ArgumentParser()
-parser.add_argument('-t', '--training_dir', type=str, default='0426_1714_saved_model')
-parser.add_argument('-m', '--model_path', type=str, default='0426_1714_saved_model/ckpt_9_0.285')
-parser.add_argument('-f', '--manifest_dir', type=str, default='manifest_test')
+parser.add_argument('-t', '--training_dir', type=str, default='/home/itk0123/x-vector-pytorch/0426_1714_saved_model_ecapa')
+parser.add_argument('-m', '--model_path', type=str, default='/home/itk0123/x-vector-pytorch/0426_1714_saved_model_ecapa/ckpt_10_0.2803')
+parser.add_argument('-f', '--manifest_dir', type=str, default='/home/itk0123/x-vector-pytorch/manifest_all_alltrain_relabel')
 parser.add_argument('-o', '--output_path', type=str, default='output.csv')
 
 parser.add_argument('-d', '--input_dim', action="store_true", default=39)  # (n_fft // 2 + 1) or n_mel or 39
-parser.add_argument('-b', '--batch_size', action="store_true", default=512)
+parser.add_argument('-b', '--batch_size', action="store_true", default=64)
 args = parser.parse_args()
 
 # path related
-test_meta = os.path.join(args.manifest_dir, 'testing.txt')
+test_meta = os.path.join(args.manifest_dir, 'training.txt')
 class_ids_path = os.path.join(args.manifest_dir, 'class_ids.json')
 train_config = os.path.join(args.training_dir, 'config.yaml')
 with open(train_config, "r") as f:
@@ -58,6 +58,7 @@ saved = torch.load(args.model_path)
 model.load_state_dict(saved['model'])
 celoss = nn.CrossEntropyLoss(reduction='none')
 id_classes = {v: k for k, v in class_ids.items()}
+audio_links = [line.rstrip('\n').split(' ')[0] for line in open(test_meta)]
 
 
 def inference(dataloader_test):
@@ -83,9 +84,11 @@ def inference(dataloader_test):
             full_gt_labels += [id_classes[i] for i in labels.detach().cpu().numpy()]
             full_losses = np.concatenate((full_losses, losses.detach().cpu().numpy()))
         # full_losses = np.around(full_losses, decimals=5)
-        df = pd.DataFrame(data={"Predictions": full_preds, "Predictions Code": full_pred_labels,
-                          "Ground Truth": full_gts, "Ground Truth Code": full_gt_labels, "Loss": full_losses})
+        df = pd.DataFrame(data={"Ground Truth": full_gts, "Ground Truth Code": full_gt_labels,
+                          "Predictions": full_preds, "Predictions Code": full_pred_labels, "Loss": full_losses,
+                          "Path": audio_links})
         df.sort_values(by=['Ground Truth', 'Loss'], ascending=[True, False], inplace=True)
+        df.reset_index(drop=True, inplace=True)
         df.to_csv(args.output_path)
         mean_acc = accuracy_score(full_gts, full_preds)
         f1s = f1_score(full_gts, full_preds, average=None)
