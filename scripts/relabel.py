@@ -2,9 +2,9 @@ import numpy as np
 import json
 import os
 
-src_manifests = ['/home/itk0123/x-vector-pytorch/manifest_all_alltrain']
-tgt_cls_id = '/home/itk0123/x-vector-pytorch/0426_1714_saved_model_ecapa/class_ids.json'
-output_folder = '/home/itk0123/x-vector-pytorch/manifest_all__alltrain_relabel'
+src_manifests = ['/home/itk0123/x-vector-pytorch/manifest_filtered']
+tgt_cls_id = '/home/itk0123/x-vector-pytorch/manifest_filtered/class_ids.json'
+output_folder = '/home/itk0123/x-vector-pytorch/manifest_filtered_relabel'
 os.makedirs(output_folder, exist_ok=True)
 
 

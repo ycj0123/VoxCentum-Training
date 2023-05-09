@@ -1,12 +1,13 @@
 import pandas as pd
 import os
+from tqdm import tqdm
 
 
 preds = pd.read_csv('output.csv', index_col=0)
 output_dir = 'manifest_filtered'
 
 first = True
-for i in range(138):
+for i in tqdm(range(138)):
     lang = preds[preds['Ground Truth'] == i]
     if not lang.empty:
         if len(lang) > 46800:

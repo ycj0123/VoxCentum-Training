@@ -78,7 +78,7 @@ def extract_split_files(folder_path, valid_frac, test_frac):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser("Configuration for data preparation")
     parser.add_argument("-r", "--raw_data", default="/mnt/storage1t/VoxCentum_stage3_mono", type=str,help='Dataset path')
-    parser.add_argument("-m", "--meta_store_path", default="manifest_stage3_alltrain", type=str, help='Save directory after processing')
+    parser.add_argument("-m", "--meta_store_path", default="manifest/stage3_alltrain", type=str, help='Save directory after processing')
     parser.add_argument("-v", "--valid_frac", default="0", type=float, help="portion to split into valid set")
     parser.add_argument("-t", "--test_frac", default="0", type=float, help="portion to split into test set")
     config = parser.parse_args()

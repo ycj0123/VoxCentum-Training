@@ -9,7 +9,7 @@ training_meta: manifest/training.txt
 validation_meta: manifest/validation.txt
 class_ids: manifest/class_ids.json
 checkpoint: null # will keep training if not `null`
-save_path: saved_model # actual name will be mmdd_savepath
+save_path: saved_model # actual name will be ckpt/mmdd_savepath
 
 # dataloader
 train:
@@ -74,20 +74,20 @@ feature: !new:modules.mfcc.MFCC_Delta
 #  ====================== </feature> ======================
 
 # data augmentation
-# timemasking: !new:torchaudio.transforms.TimeMasking
-#     time_mask_param: !ref <sample_sec> * 16000 // 4
-#     p: 0.5
+timemasking: !new:torchaudio.transforms.TimeMasking
+    time_mask_param: 5
+    p: 0.5
 
-# freqmasking: !new:torchaudio.transforms.FrequencyMasking
-#     freq_mask_param: !ref <n_fft> // 8
+freqmasking: !new:torchaudio.transforms.FrequencyMasking
+    freq_mask_param: 10
 
 # combine feature with data augmentation
 transforms:
     names: 
         - feature
-        # - time_masking
-        # - freq_masking
+        - time_masking
+        - freq_masking
     modules:
         - !ref <feature>
-        # - !ref <timemasking>
-        # - !ref <freqmasking>
+        - !ref <timemasking>
+        - !ref <freqmasking>

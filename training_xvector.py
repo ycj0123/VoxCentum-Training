@@ -42,7 +42,7 @@ if len(sys.argv) == 1:
 with open(sys.argv[1], "r") as f:
     config = load_hyperpyyaml(f)
 now = datetime.datetime.now()
-savepath = f'{now.strftime("%m%d_%H%M")}_{config["save_path"]}'
+savepath = os.path.join('ckpt', f'{now.strftime("%m%d_%H%M")}_{config["save_path"]}')
 os.makedirs(savepath, exist_ok=True)
 shutil.copy(os.path.abspath(sys.argv[1]), os.path.abspath(savepath))
 writer = SummaryWriter(log_dir=f'{savepath}/log')
