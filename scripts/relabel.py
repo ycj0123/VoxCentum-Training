@@ -2,9 +2,9 @@ import numpy as np
 import json
 import os
 
-src_manifests = ['/home/itk0123/x-vector-pytorch/manifest_filtered']
+src_manifests = ['/home/itk0123/x-vector-pytorch/manifest_filtered_random']
 tgt_cls_id = '/home/itk0123/x-vector-pytorch/manifest_filtered/class_ids.json'
-output_folder = '/home/itk0123/x-vector-pytorch/manifest_filtered_relabel'
+output_folder = '/home/itk0123/x-vector-pytorch/manifest_filtered_random_relabel'
 os.makedirs(output_folder, exist_ok=True)
 
 

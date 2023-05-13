@@ -14,7 +14,7 @@ import pandas as pd
 import torch.nn as nn
 import json
 from torch.utils.data import DataLoader
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, classification_report
 from hyperpyyaml import load_hyperpyyaml
 from tqdm import tqdm
 
@@ -27,10 +27,14 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 # Argument parser
 parser = argparse.ArgumentParser()
-parser.add_argument('-t', '--training_dir', type=str, default='0411_2055_saved_model_conv_mfcc5e-4')
-parser.add_argument('-m', '--model_path', type=str, default='0411_2055_saved_model_conv_mfcc5e-4/ckpt_best_46_0.1407')
-parser.add_argument('-f', '--manifest_dir', type=str, default='manifest')
-parser.add_argument('-o', '--output_path', type=str, default='output.csv')
+parser.add_argument('-t', '--training_dir', type=str,
+                    default='/home/itk0123/x-vector-pytorch/ckpt/0510_0125_saved_model_filtered_ecapa')
+parser.add_argument('-m', '--model_path', type=str,
+                    default='/home/itk0123/x-vector-pytorch/ckpt/0510_0125_saved_model_filtered_ecapa/ckpt_4_0.09781')
+parser.add_argument('-f', '--manifest_dir', type=str,
+                    default='/home/itk0123/x-vector-pytorch/manifest/manifest_filtered')
+parser.add_argument('-p', '--preds', type=str, default='preds.csv')
+parser.add_argument('-s', '--stats', type=str, default='stats.csv')
 
 parser.add_argument('-d', '--input_dim', action="store_true", default=39)  # (n_fft // 2 + 1) or n_mel or 39
 parser.add_argument('-b', '--batch_size', action="store_true", default=512)
@@ -51,6 +55,7 @@ dataloader_test = DataLoader(dataset_test, batch_size=args.batch_size, shuffle=F
 with open(class_ids_path, "r") as f:
     class_ids = json.load(f)
     num_class = len(class_ids)
+id_classes = [k for k in class_ids.keys()]
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 model = config['model'](args.input_dim, num_class).to(device)
@@ -80,13 +85,17 @@ def inference(dataloader_val):
                 full_preds.append(pred)
             for lab in labels.detach().cpu().numpy():
                 full_gts.append(lab)
-        df = pd.DataFrame(data={"Predictions": full_preds, "Ground Truth": full_gts})
-        df.to_csv(args.output_path)
+        preds_df = pd.DataFrame(data={"Predictions": full_preds, "Ground Truth": full_gts})
+        preds_df.to_csv(args.preds)
         mean_acc = accuracy_score(full_gts, full_preds)
         f1s = f1_score(full_gts, full_preds, average=None)
-        # mean_loss = np.mean(np.asarray(val_loss_list))
+        report = classification_report(full_gts, full_preds, zero_division=0, output_dict=True)
         print(f'Total testing accuracy: {mean_acc:.4}')
-        print(f'F1 scores for each class: {f1s}')
+        print(f'Total testing f1 macro: {np.mean(f1s):.4}')
+        idx_mapper = {k: id_classes[int(k)] for k in list(report.keys())[:-3]}
+        report_df = pd.DataFrame(data=report).T.rename(index=idx_mapper)
+        print(report_df)
+        report_df.to_csv(args.stats)
 
 
 if __name__ == '__main__':

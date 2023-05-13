@@ -139,3 +139,4 @@ manifest*
 *ckpt*
 */config.yaml
 *log*
+*.json
