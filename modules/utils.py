@@ -106,14 +106,41 @@ def load_npy_data(filepath, spec_len=400, mode='train'):
 # Collate Functions
 
 
-def speech_collate(batch):
-    targets = []
-    specs = []
-    for sample in batch:
-        specs.append(sample[0])
-        targets.append((sample[1]))
-    return specs, targets
+# def speech_collate(batch):
+#     specs = []
+#     targets = []
+#     if len(batch[0]) == 3:
+#         families = []
+#     else:
+#         families = None
+#     for sample in batch:
+#         specs.append(sample[0])
+#         targets.append((sample[1]))
+#         if families is not None:
+#             families.append((sample[2]))
+#     if families is None:
+#         return specs, targets
+#     else:
+#         return specs, targets, families
 
+def speech_collate(batch):
+    collated = [[] for x in range(len(batch[0]))]
+    for sample in batch:
+        for i, s in enumerate(sample):
+            collated[i].append(s)
+    return collated
+
+def fleurs_collate_pad(batch):
+    wfs = []
+    labels = []
+    longest = max(batch, key=lambda sample: sample['num_samples'])['audio']['array']
+    # print(longest.shape)
+    for sample in batch:
+        new_sample = np.zeros_like(longest)
+        new_sample[:sample['num_samples']] = sample['audio']['array']
+        wfs.append(torch.from_numpy(new_sample))
+        labels.append(torch.tensor([int(sample['lang_id'])]))
+    return wfs, labels
 
 def speech_collate_pad(batch):
     targets = []

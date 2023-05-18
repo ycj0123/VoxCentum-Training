@@ -29,7 +29,8 @@ from torchaudio import transforms as T
 
 from modules.mfcc import MFCC_Delta
 from modules.utils import speech_collate, count_parameters
-from modules.waveform_dataset import WaveformDataset
+from modules.waveform_dataset import WaveformDataset, FamilyWaveformDataset
+from modules.contrastive_loss import SupConLoss
 
 
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -96,6 +97,7 @@ model.to(device)
 
 optimizer = config["optimizer"](model.parameters())
 celoss = nn.CrossEntropyLoss()
+con_loss = SupConLoss()
 # if config["contrastive_loss"]:
 #     contrastive_loss = ContrastiveLoss()
 
@@ -132,16 +134,30 @@ def train(dataloader_train, epoch):
     full_gts = []
     model.train()
     start_time = time.time()
-    for i, sample_batched in enumerate(tqdm(dataloader_train, desc=f"epoch {epoch}: ", dynamic_ncols=True)):
+    pbar = tqdm(dataloader_train, dynamic_ncols=True)
+    loss = 0.0
+    for i, sample_batched in enumerate(pbar):
+        pbar.set_description(desc=f"epoch {epoch}, loss={loss:.4f}")
         logging.debug(f"Taking {time.time() - start_time} seconds to load 1 batch")
         features = torch.from_numpy(np.asarray([torch_tensor.numpy() for torch_tensor in sample_batched[0]])).float()
         labels = torch.from_numpy(np.asarray([torch_tensor[0].numpy() for torch_tensor in sample_batched[1]]))
+        if len(sample_batched) == 3:
+            families = torch.from_numpy(np.asarray([torch_tensor[0].numpy() for torch_tensor in sample_batched[2]]))
+            families = families.to(device)
+        elif len(sample_batched) == 4:
+            features_orig = torch.from_numpy(np.asarray([torch_tensor.numpy() for torch_tensor in sample_batched[2]])).float()
+            families = torch.from_numpy(np.asarray([torch_tensor[0].numpy() for torch_tensor in sample_batched[3]]))
+            features_orig, families = features_orig.to(device), families.to(device)
         features, labels = features.to(device), labels.to(device)
         features.requires_grad = True
         optimizer.zero_grad()
         pred_logits, x_vec = model(features)  # x_vec = B x Dim
+        # _, x_vec_orig = model(features_orig)  # x_vec = B x Dim
         # CE loss
         loss = celoss(pred_logits, labels)
+        # loss_1 = con_loss(torch.stack((x_vec, x_vec_orig), 1), families)
+        # loss_1 = con_loss(torch.unsqueeze(x_vec, 1), families)
+        # loss = loss_0 + 0.01*loss_1
         loss.backward()
         optimizer.step()
         train_loss_list.append(loss.item())

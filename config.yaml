@@ -5,19 +5,19 @@
 # See https://github.com/speechbrain/HyperPyYAML for more
 
 # Path related
-training_meta: manifest/manifest_filtered/training.txt
-validation_meta: manifest/manifest_filtered/validation.txt
-class_ids: manifest/manifest_filtered/class_ids.json
+training_meta: manifest/manifest_filtered_family/training.txt
+validation_meta: manifest/manifest_filtered_family/validation.txt
+class_ids: manifest/manifest_filtered_family/class_ids.json
 checkpoint: null # will keep training if not `null`
-save_path: saved_model_filtered_ecapa # actual name will be ckpt/mmdd_savepath
+save_path: saved_model_filtered_family_ecapa # actual name will be ckpt/mmdd_savepath
 
 # dataloader
 train:
     num_workers: 0
-    batch_size: 256
+    batch_size: 64
 val:
     num_workers: 0
-    batch_size: 512
+    batch_size: 128
 
 # network
 model: !name:models.ecapa_tdnn.ECAPA_TDNN
