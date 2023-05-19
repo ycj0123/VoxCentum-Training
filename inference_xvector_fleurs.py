@@ -5,6 +5,7 @@ Created on Sat May 30 20:22:26 2020
 
 @author: krishna, Iuthing
 """
+import datetime
 import os
 
 import torch
@@ -14,10 +15,12 @@ import pandas as pd
 import torch.nn as nn
 import json
 from torch.utils.data import DataLoader
-from sklearn.metrics import accuracy_score, f1_score, classification_report
 from hyperpyyaml import load_hyperpyyaml
 from tqdm import tqdm
+from sklearn.metrics import accuracy_score, f1_score, classification_report,  confusion_matrix
 from datasets import load_dataset
+import matplotlib.pyplot as plt
+import seaborn as sn
 
 
 from modules.utils import fleurs_collate_pad, speech_collate_pad
@@ -35,8 +38,8 @@ parser.add_argument('-m', '--model_path', type=str,
                     default='/home/itk0123/x-vector-pytorch/ckpt/0510_0125_saved_model_filtered_ecapa/ckpt_13_0.07809')
 parser.add_argument('-f', '--manifest_dir', type=str,
                     default='/home/itk0123/x-vector-pytorch/manifest/manifest_filtered')
-parser.add_argument('-p', '--preds', type=str, default='preds.csv')
-parser.add_argument('-s', '--stats', type=str, default='stats.csv')
+parser.add_argument('-o', '--output', type=str, default='output')
+
 
 parser.add_argument('-d', '--input_dim', action="store_true", default=39)  # (n_fft // 2 + 1) or n_mel or 39
 parser.add_argument('-b', '--batch_size', action="store_true", default=32)
@@ -48,6 +51,9 @@ class_ids_path = os.path.join(args.manifest_dir, 'class_ids.json')
 train_config = os.path.join(args.training_dir, 'config.yaml')
 with open(train_config, "r") as f:
     config = load_hyperpyyaml(f)
+now = datetime.datetime.now()
+savepath = os.path.join('outputs', f'{now.strftime("%m%d_%H%M")}_{args.output}')
+os.makedirs(savepath, exist_ok=True)
 
 # Data related
 dataset_test = load_dataset("google/fleurs", "all", split="test")
@@ -94,11 +100,17 @@ def inference(dataloader_val):
         mean_acc = accuracy_score(full_gts_code, full_preds_code)
         f1s = f1_score(full_gts_code, full_preds_code, average=None)
         report = classification_report(full_gts_code, full_preds_code, zero_division=0, output_dict=True)
+        confusion = confusion_matrix(full_gts_code, full_preds_code, labels=id_classes)
+        confusion_df = pd.DataFrame(confusion, index=id_classes, columns=id_classes)
         print(f'Total testing accuracy: {mean_acc:.4}')
         print(f'Total testing f1 macro: {np.mean(f1s):.4}')
         report_df = pd.DataFrame(data=report).T
         print(report_df)
-        report_df.to_csv(args.stats)
+        report_df.to_csv(os.path.join(savepath, "stats.csv"))
+        confusion_df.to_csv(os.path.join(savepath, "confusion.csv"))
+        plt.figure(figsize=(8,6))
+        svm = sn.heatmap(confusion_df)#, cmap='coolwarm'
+        plt.savefig(os.path.join(savepath, "heatmap.png"), dpi=400)
 
 
 if __name__ == '__main__':
