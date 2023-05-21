@@ -44,11 +44,11 @@ class SpeechDataset():
                                spec_len=self.spec_len, win_length=self.win_length,
                                hop_length=self.hop_length, min_dur_sec=self.min_dur_sec,
                                n_mels=self.n_mels)
-        sample = (torch.from_numpy(np.ascontiguousarray(spec)), torch.from_numpy(np.ascontiguousarray(class_id)))
+        sample = (torch.from_numpy(np.ascontiguousarray(spec)), torch.tensor([class_id]))
         # spec = utils.load_data(audio_link,mode='train', n_fft=512, spec_len=400)
         # waveform, sr = torchaudio.load(audio_link)
         # waveform = torch.mean(waveform, dim=0)
         # logger.debug(waveform.shape)
         # feat = self.transforms(waveform)
-        # sample = (feat, torch.from_numpy(np.ascontiguousarray(class_id)))
+        # sample = (feat, torch.tensor([class_id]))
         return sample

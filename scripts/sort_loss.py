@@ -70,9 +70,8 @@ def inference(dataloader_test):
         full_gt_labels = []
         full_losses = np.array([])
         for i_batch, sample_batched in enumerate(tqdm(dataloader_test, dynamic_ncols=True)):
-            features = torch.from_numpy(
-                np.stack([torch_tensor.numpy() for torch_tensor in sample_batched[0]], axis=0)).float()
-            labels = torch.from_numpy(np.asarray([torch_tensor[0].numpy() for torch_tensor in sample_batched[1]]))
+            features = torch.stack(sample_batched[0])
+            labels = torch.cat(sample_batched[1])
             features, labels = features.to(device), labels.to(device)
             pred_logits, x_vec = model(features)
             predictions = np.argmax(pred_logits.detach().cpu().numpy(), axis=1)

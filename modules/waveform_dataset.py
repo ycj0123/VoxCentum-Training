@@ -54,9 +54,9 @@ class WaveformDataset():
             feat = waveform
         feat = torch.squeeze(feat)
         if not self.family:
-            sample = (feat, torch.from_numpy(np.ascontiguousarray(class_id)))
+            sample = (feat, torch.tensor([class_id]))
         else:
-            sample = (feat, torch.from_numpy(np.ascontiguousarray(class_id)), torch.from_numpy(np.ascontiguousarray(family_id)))
+            sample = (feat, torch.tensor([class_id]), torch.tensor([family_id]))
         return sample
 
 class FamilyWaveformDataset():
@@ -98,5 +98,5 @@ class FamilyWaveformDataset():
         feat = torch.squeeze(feat)
         feat_trans = self.transforms(waveform)
         feat_trans = torch.squeeze(feat_trans)
-        sample = (feat_trans, torch.from_numpy(np.ascontiguousarray(class_id)), feat, torch.from_numpy(np.ascontiguousarray(family_id)))
+        sample = (feat_trans, torch.tensor([class_id]), feat, torch.tensor([family_id]))
         return sample

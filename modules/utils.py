@@ -13,6 +13,7 @@ import torch
 
 def load_wav(audio_filepath, sr, min_dur_sec=4):
     audio_data, fs = librosa.load(audio_filepath, sr=16000)
+    audio_data = librosa.util.normalize(audio_data)
     len_file = len(audio_data)
 
     if len_file < int(min_dur_sec*sr):
@@ -133,11 +134,15 @@ def speech_collate(batch):
 def fleurs_collate_pad(batch):
     wfs = []
     labels = []
-    longest = max(batch, key=lambda sample: sample['num_samples'])['audio']['array']
-    # print(longest.shape)
+    longest = max(batch, key=lambda sample: sample['audio']['array'].shape[0])['audio']['array']
+    max_len = longest.shape[0] if longest.shape[0] < 480000 else 480000
     for sample in batch:
-        new_sample = np.zeros_like(longest)
-        new_sample[:sample['num_samples']] = sample['audio']['array']
+        # new_sample = np.zeros_like(longest)
+        new_sample = np.zeros(max_len, dtype=sample['audio']['array'].dtype)
+        if sample['audio']['array'].shape[0] <= max_len:
+            new_sample[:sample['audio']['array'].shape[0]] = sample['audio']['array']
+        else:
+            new_sample = sample['audio']['array'][:max_len]
         wfs.append(torch.from_numpy(new_sample))
         labels.append(torch.tensor([int(sample['lang_id'])]))
     return wfs, labels

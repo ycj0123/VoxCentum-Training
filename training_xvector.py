@@ -31,6 +31,7 @@ from modules.mfcc import MFCC_Delta
 from modules.utils import speech_collate, count_parameters
 from modules.waveform_dataset import WaveformDataset, FamilyWaveformDataset
 from modules.contrastive_loss import SupConLoss
+from models.loss import AAMsoftmax
 
 
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -135,18 +136,18 @@ def train(dataloader_train, epoch):
     model.train()
     start_time = time.time()
     pbar = tqdm(dataloader_train, dynamic_ncols=True)
-    loss = 0.0
     for i, sample_batched in enumerate(pbar):
-        pbar.set_description(desc=f"epoch {epoch}, loss={loss:.4f}")
+        if len(train_loss_list) > 0:
+            pbar.set_description(desc=f"epoch {epoch}, loss={np.average(train_loss_list):.4f}")
         logging.debug(f"Taking {time.time() - start_time} seconds to load 1 batch")
-        features = torch.from_numpy(np.asarray([torch_tensor.numpy() for torch_tensor in sample_batched[0]])).float()
-        labels = torch.from_numpy(np.asarray([torch_tensor[0].numpy() for torch_tensor in sample_batched[1]]))
+        features = torch.stack(sample_batched[0])
+        labels = torch.cat(sample_batched[1])
         if len(sample_batched) == 3:
-            families = torch.from_numpy(np.asarray([torch_tensor[0].numpy() for torch_tensor in sample_batched[2]]))
+            families = torch.cat(sample_batched[2])
             families = families.to(device)
         elif len(sample_batched) == 4:
-            features_orig = torch.from_numpy(np.asarray([torch_tensor.numpy() for torch_tensor in sample_batched[2]])).float()
-            families = torch.from_numpy(np.asarray([torch_tensor[0].numpy() for torch_tensor in sample_batched[3]]))
+            features_orig = torch.stack(sample_batched[2])
+            families = torch.cat(sample_batched[3])
             features_orig, families = features_orig.to(device), families.to(device)
         features, labels = features.to(device), labels.to(device)
         features.requires_grad = True
@@ -161,9 +162,6 @@ def train(dataloader_train, epoch):
         loss.backward()
         optimizer.step()
         train_loss_list.append(loss.item())
-        # train_acc_list.append(accuracy)
-        # if i_batch%10==0:
-        #    logging.info('Loss {} after {} iteration'.format(np.mean(np.asarray(train_loss_list)),i_batch))
 
         predictions = np.argmax(pred_logits.detach().cpu().numpy(), axis=1)
         for pred in predictions:
@@ -193,11 +191,8 @@ def validation(dataloader_val, epoch, best_loss, old_best):
         full_preds = []
         full_gts = []
         for i_batch, sample_batched in enumerate(tqdm(dataloader_val, desc=f"epoch {epoch} val: ", dynamic_ncols=True)):
-            # features = torch.from_numpy(np.asarray(
-            #     [torch_tensor.numpy().T for torch_tensor in sample_batched[0]])).float()
-            features = torch.from_numpy(np.asarray(
-                [torch_tensor.numpy() for torch_tensor in sample_batched[0]])).float()
-            labels = torch.from_numpy(np.asarray([torch_tensor[0].numpy() for torch_tensor in sample_batched[1]]))
+            features = torch.stack(sample_batched[0])
+            labels = torch.cat(sample_batched[1])
             features, labels = features.to(device), labels.to(device)
             pred_logits, x_vec = model(features)
             # CE loss

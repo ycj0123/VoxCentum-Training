@@ -29,5 +29,5 @@ class SpeechFeatureDataset():
         class_id = self.labels[idx]
         # lang_label=lang_id[self.audio_links[idx].split('/')[-2]]
         spec = utils.load_npy_data(npy_filepath, mode=self.mode)
-        sample = (torch.from_numpy(np.ascontiguousarray(spec)), torch.from_numpy(np.ascontiguousarray(class_id)))
+        sample = (torch.from_numpy(np.ascontiguousarray(spec)), torch.tensor([class_id]))
         return sample

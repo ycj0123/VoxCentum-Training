@@ -76,9 +76,8 @@ def inference(dataloader_val):
         full_preds = []
         full_gts = []
         for i_batch, sample_batched in enumerate(tqdm(dataloader_val, dynamic_ncols=True)):
-            features = torch.from_numpy(
-                np.stack([torch_tensor.numpy() for torch_tensor in sample_batched[0]], axis=0)).float()
-            labels = torch.from_numpy(np.asarray([torch_tensor[0].numpy() for torch_tensor in sample_batched[1]]))
+            features = torch.stack(sample_batched[0])
+            labels = torch.cat(sample_batched[1])
             features, labels = features.to(device), labels.to(device)
             pred_logits, x_vec = model(features)
             # CE loss
