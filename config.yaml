@@ -73,21 +73,21 @@ feature: !new:modules.mfcc.MFCC_Delta
 
 #  ====================== </feature> ======================
 
-# data augmentation
-timemasking: !new:torchaudio.transforms.TimeMasking
-    time_mask_param: 5
-    p: 0.5
+# # data augmentation
+# timemasking: !new:torchaudio.transforms.TimeMasking
+#     time_mask_param: 5
+#     p: 0.5
 
-freqmasking: !new:torchaudio.transforms.FrequencyMasking
-    freq_mask_param: 10
+# freqmasking: !new:torchaudio.transforms.FrequencyMasking
+#     freq_mask_param: 10
 
-# combine feature with data augmentation
-transforms:
-    names: 
-        - feature
-        - time_masking
-        - freq_masking
-    modules:
-        - !ref <feature>
-        - !ref <timemasking>
-        - !ref <freqmasking>
+# # combine feature with data augmentation
+# transforms:
+#     names: 
+#         - feature
+#         - time_masking
+#         - freq_masking
+#     modules:
+#         - !ref <feature>
+#         - !ref <timemasking>
+#         - !ref <freqmasking>

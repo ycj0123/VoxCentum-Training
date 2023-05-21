@@ -8,22 +8,19 @@ import torch.nn.functional as F
 from models.tools import *
 
 class AAMsoftmax(nn.Module):
-    def __init__(self, n_class, m=0.2, s=30):
+    def __init__(self, m=0.2, s=30):
         
         super(AAMsoftmax, self).__init__()
         self.m = m
         self.s = s
-        self.weight = torch.nn.Parameter(torch.FloatTensor(n_class, 192), requires_grad=True)
+        # self.weight = torch.nn.Parameter(torch.FloatTensor(n_class, 192), requires_grad=True)
         self.ce = nn.CrossEntropyLoss()
-        nn.init.xavier_normal_(self.weight, gain=1)
         self.cos_m = math.cos(self.m)
         self.sin_m = math.sin(self.m)
         self.th = math.cos(math.pi - self.m)
         self.mm = math.sin(math.pi - self.m) * self.m
 
-    def forward(self, x, label=None):
-        
-        cosine = F.linear(F.normalize(x), F.normalize(self.weight))
+    def forward(self, cosine, label=None):
         sine = torch.sqrt((1.0 - torch.mul(cosine, cosine)).clamp(0, 1))
         phi = cosine * self.cos_m - sine * self.sin_m
         phi = torch.where((cosine - self.th) > 0, phi, cosine - self.mm)
@@ -33,6 +30,6 @@ class AAMsoftmax(nn.Module):
         output = output * self.s
         
         loss = self.ce(output, label)
-        prec1 = accuracy(output.detach(), label.detach(), topk=(1,))[0]
+        # prec1 = accuracy(output.detach(), label.detach(), topk=(1,))[0]
 
-        return loss, prec1
+        return loss

@@ -165,6 +165,7 @@ class ECAPA_TDNN(nn.Module):
         self.fc6 = nn.Linear(3072, 192)
         self.bn6 = nn.BatchNorm1d(192)
         self.output = nn.Linear(192, num_class)
+        # nn.init.xavier_normal_(self.output.weight, gain=1)
 
     def forward(self, x):
         # with torch.no_grad():

@@ -26,12 +26,13 @@ import time
 from collections import OrderedDict
 import datetime
 from torchaudio import transforms as T
+from torchaudio_augmentations import *
 
 from modules.mfcc import MFCC_Delta
 from modules.utils import speech_collate, count_parameters
-from modules.waveform_dataset import WaveformDataset, FamilyWaveformDataset
+from modules.waveform_dataset import WaveformDataset
 from modules.contrastive_loss import SupConLoss
-from models.loss import AAMsoftmax
+from modules.loss import AAMsoftmax
 
 
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -50,13 +51,24 @@ shutil.copy(os.path.abspath(sys.argv[1]), os.path.abspath(savepath))
 writer = SummaryWriter(log_dir=f'{savepath}/log')
 
 # Data related
-transform_dict = OrderedDict(zip(config['transforms']['names'], config['transforms']['modules']))
-transforms = nn.Sequential(transform_dict)
+transforms = Compose([
+    # RandomApply([PolarityInversion()], p=0.2),
+    RandomApply([Noise()], p=0.2),
+    RandomApply([Gain()], p=0.2),
+    RandomApply([HighLowPass(sample_rate=16000)], p=0.4),
+    # RandomApply([Delay(sample_rate=16000)], p=0.4),
+    RandomApply([PitchShift(
+        n_samples=80000,
+        sample_rate=16000
+    )], p=0.4),
+    RandomApply([Reverb(sample_rate=16000)], p=0.4)
+])
+# transforms = None
 
 dataset_train = WaveformDataset(manifest=config["training_meta"], mode='train',
-                                min_dur_sec=config["min_dur_sec"], wf_sec=config["sample_sec"], transforms=transforms)
+                                min_dur_sec=config["min_dur_sec"], wf_sec=config["sample_sec"], transforms=transforms, feature=config['feature'])
 dataset_val = WaveformDataset(manifest=config["validation_meta"], mode='train',
-                              min_dur_sec=config["min_dur_sec"], wf_sec=config["sample_sec"], transforms=config['feature'])
+                              min_dur_sec=config["min_dur_sec"], wf_sec=config["sample_sec"], feature=config['feature'])
 
 dataloader_train = DataLoader(dataset_train, batch_size=config["train"]["batch_size"],
                               num_workers=config["train"]["num_workers"], shuffle=True,
@@ -97,10 +109,8 @@ else:
 model.to(device)
 
 optimizer = config["optimizer"](model.parameters())
-celoss = nn.CrossEntropyLoss()
-con_loss = SupConLoss()
-# if config["contrastive_loss"]:
-#     contrastive_loss = ContrastiveLoss()
+criterion = nn.CrossEntropyLoss()
+# criterion = AAMsoftmax()
 
 # handle checkpoint
 start_epoch = -1
@@ -142,20 +152,20 @@ def train(dataloader_train, epoch):
         logging.debug(f"Taking {time.time() - start_time} seconds to load 1 batch")
         features = torch.stack(sample_batched[0])
         labels = torch.cat(sample_batched[1])
-        if len(sample_batched) == 3:
-            families = torch.cat(sample_batched[2])
-            families = families.to(device)
-        elif len(sample_batched) == 4:
-            features_orig = torch.stack(sample_batched[2])
-            families = torch.cat(sample_batched[3])
-            features_orig, families = features_orig.to(device), families.to(device)
+        # if len(sample_batched) == 3:
+        #     families = torch.cat(sample_batched[2])
+        #     families = families.to(device)
+        # elif len(sample_batched) == 4:
+        #     features_orig = torch.stack(sample_batched[2])
+        #     families = torch.cat(sample_batched[3])
+        #     features_orig, families = features_orig.to(device), families.to(device)
         features, labels = features.to(device), labels.to(device)
         features.requires_grad = True
         optimizer.zero_grad()
-        pred_logits, x_vec = model(features)  # x_vec = B x Dim
+        pred_logits, x_vecs = model(features)  # x_vec = B x Dim
         # _, x_vec_orig = model(features_orig)  # x_vec = B x Dim
         # CE loss
-        loss = celoss(pred_logits, labels)
+        loss = criterion(pred_logits, labels)
         # loss_1 = con_loss(torch.stack((x_vec, x_vec_orig), 1), families)
         # loss_1 = con_loss(torch.unsqueeze(x_vec, 1), families)
         # loss = loss_0 + 0.01*loss_1
@@ -196,7 +206,7 @@ def validation(dataloader_val, epoch, best_loss, old_best):
             features, labels = features.to(device), labels.to(device)
             pred_logits, x_vec = model(features)
             # CE loss
-            loss = celoss(pred_logits, labels)
+            loss = criterion(pred_logits, labels)
             val_loss_list.append(loss.item())
             # train_acc_list.append(accuracy)
             predictions = np.argmax(pred_logits.detach().cpu().numpy(), axis=1)

@@ -137,7 +137,6 @@ def fleurs_collate_pad(batch):
     longest = max(batch, key=lambda sample: sample['audio']['array'].shape[0])['audio']['array']
     max_len = longest.shape[0] if longest.shape[0] < 480000 else 480000
     for sample in batch:
-        # new_sample = np.zeros_like(longest)
         new_sample = np.zeros(max_len, dtype=sample['audio']['array'].dtype)
         if sample['audio']['array'].shape[0] <= max_len:
             new_sample[:sample['audio']['array'].shape[0]] = sample['audio']['array']
