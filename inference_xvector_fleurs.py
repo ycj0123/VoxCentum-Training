@@ -33,16 +33,16 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 # Argument parser
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--training_dir', type=str,
-                    default='/home/itk0123/x-vector-pytorch/ckpt/0522_0139_saved_model_filtered_ecapa/')
+                    default='/home/itk0123/x-vector-pytorch/ckpt/0426_1714_saved_model_ecapa/')
 parser.add_argument('-m', '--model_path', type=str,
-                    default='/home/itk0123/x-vector-pytorch/ckpt/0522_0139_saved_model_filtered_ecapa/ckpt_0_0.2251')
+                    default='/home/itk0123/x-vector-pytorch/ckpt/0426_1714_saved_model_ecapa/ckpt_1_0.407')
 parser.add_argument('-f', '--manifest_dir', type=str,
-                    default='/home/itk0123/x-vector-pytorch/manifest/manifest_filtered')
-parser.add_argument('-o', '--output', type=str, default='output')
+                    default='/home/itk0123/x-vector-pytorch/manifest/')
+parser.add_argument('-o', '--output', type=str, default='output_all_1_fleurs')
 
 
 parser.add_argument('-d', '--input_dim', action="store_true", default=39)  # (n_fft // 2 + 1) or n_mel or 39
-parser.add_argument('-b', '--batch_size', action="store_true", default=32)
+parser.add_argument('-b', '--batch_size', action="store_true", default=64)
 args = parser.parse_args()
 
 # path related

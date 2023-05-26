@@ -32,7 +32,7 @@ from modules.mfcc import MFCC_Delta
 from modules.utils import speech_collate, count_parameters
 from modules.waveform_dataset import WaveformDataset, FamilyWaveformDataset
 from modules.contrastive_loss import SupConLoss
-from modules.loss import AAMsoftmax
+from modules.AAM_softmax_loss import AAMsoftmax
 
 
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -163,11 +163,11 @@ def train(dataloader_train, epoch):
         feats, labels = feats.to(device), labels.to(device)
         feats.requires_grad = True
         optimizer.zero_grad()
-        pred_logits, x_vecs = model(feats)  # x_vec = B x Dim
+        pred_logits, proj, emb = model(feats)  # x_vec = B x Dim
         # CE loss
         loss_prim = criterion(pred_logits, labels)
         # supcon
-        x_vecs_nviews = torch.stack(torch.split(x_vecs, [bsz, bsz], dim=0), dim=1)
+        x_vecs_nviews = torch.stack(torch.split(proj, [bsz, bsz], dim=0), dim=1)
         loss_aux = criterion_aux(x_vecs_nviews, labels[:bsz])
         loss = loss_prim + 0.1*loss_aux
         loss.backward()

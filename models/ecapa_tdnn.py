@@ -165,7 +165,6 @@ class ECAPA_TDNN(nn.Module):
         self.fc6 = nn.Linear(3072, 192)
         self.bn6 = nn.BatchNorm1d(192)
         self.output = nn.Linear(192, num_class)
-        # nn.init.xavier_normal_(self.output.weight, gain=1)
 
     def forward(self, x):
         # with torch.no_grad():
@@ -204,3 +203,21 @@ class ECAPA_TDNN(nn.Module):
         preds = self.output(embedding)
 
         return preds, embedding
+
+
+class ECAPA_TDNN_SupCon(nn.Module):
+
+    def __init__(self, input_dim, num_class, C=512):
+
+        super(ECAPA_TDNN_SupCon, self).__init__()
+        self.proj = nn.Sequential(
+            nn.Linear(192, 192),
+            nn.ReLU(),
+            nn.Linear(192, 128)
+        )
+
+    def forward(self, x):
+        preds, embedding = super(ECAPA_TDNN_SupCon, self).forward(x)
+        proj = self.output(embedding)
+
+        return preds, proj, embedding
