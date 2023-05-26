@@ -31,15 +31,15 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 # Argument parser
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--training_dir', type=str,
-                    default='/home/ycj0123/x-vector-pytorch/ckpt/0510_1041_saved_model_random_ecapa')
+                    default='/home/itk0123/x-vector-pytorch/ckpt/0426_1714_saved_model_ecapa/')
 parser.add_argument('-m', '--model_path', type=str,
-                    default='/home/ycj0123/x-vector-pytorch/ckpt/0510_1041_saved_model_random_ecapa/ckpt_14_0.3106')
+                    default='/home/itk0123/x-vector-pytorch/ckpt/0426_1714_saved_model_ecapa/ckpt_10_0.2803')
 parser.add_argument('-f', '--manifest_dir', type=str,
-                    default='/home/ycj0123/x-vector-pytorch/manifest/manifest_filtered_random')
+                    default='/home/itk0123/x-vector-pytorch/manifest/manifest_all_relabel')
 parser.add_argument('-o', '--output', type=str, default='output')
 
 parser.add_argument('-d', '--input_dim', action="store_true", default=39)  # (n_fft // 2 + 1) or n_mel or 39
-parser.add_argument('-b', '--batch_size', action="store_true", default=128)
+parser.add_argument('-b', '--batch_size', action="store_true", default=64)
 args = parser.parse_args()
 
 # path related

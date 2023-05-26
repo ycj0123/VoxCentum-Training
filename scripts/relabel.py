@@ -2,10 +2,9 @@ import numpy as np
 import json
 import os
 
-src_manifests = ['/home/itk0123/x-vector-pytorch/manifest_filtered_random']
-tgt_cls_id = '/home/itk0123/x-vector-pytorch/manifest_filtered/class_ids.json'
-output_folder = '/home/itk0123/x-vector-pytorch/manifest_filtered_random_relabel'
-os.makedirs(output_folder, exist_ok=True)
+src_manifests = ['/home/itk0123/x-vector-pytorch/manifest/manifest_all']
+tgt_cls_id = '/home/itk0123/x-vector-pytorch/manifest/class_ids.json'
+output_folder = '/home/itk0123/x-vector-pytorch/manifest/manifest_all_relabel'
 
 
 def make_manifest(manifest_sep, mode='testing'):
@@ -30,6 +29,7 @@ with open(tgt_cls_id, "r") as f:
 
 id_class = [{v: k for k, v in c.items()} for c in class_id]
 
+os.makedirs(output_folder, exist_ok=True)
 with open(f"{output_folder}/class_ids.json", "w+") as f:
     json.dump(new_class_id, f, indent=4)
 

@@ -6,6 +6,9 @@ Created on Sat May 30 20:22:26 2020
 @author: krishna, Iuthing
 """
 import os
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent))
 
 import torch
 import argparse
@@ -27,10 +30,10 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 # Argument parser
 parser = argparse.ArgumentParser()
-parser.add_argument('-t', '--training_dir', type=str, default='/home/itk0123/x-vector-pytorch/0426_1714_saved_model_ecapa')
-parser.add_argument('-m', '--model_path', type=str, default='/home/itk0123/x-vector-pytorch/0426_1714_saved_model_ecapa/ckpt_10_0.2803')
-parser.add_argument('-f', '--manifest_dir', type=str, default='/home/itk0123/x-vector-pytorch/manifest_all_alltrain_relabel')
-parser.add_argument('-o', '--output_path', type=str, default='output.csv')
+parser.add_argument('-t', '--training_dir', type=str, default='/home/itk0123/x-vector-pytorch/ckpt/0426_1714_saved_model_ecapa/')
+parser.add_argument('-m', '--model_path', type=str, default='/home/itk0123/x-vector-pytorch/ckpt/0426_1714_saved_model_ecapa/ckpt_10_0.2803')
+parser.add_argument('-f', '--manifest_dir', type=str, default='/home/itk0123/x-vector-pytorch/manifest/manifest_all_alltrain_relabel')
+parser.add_argument('-o', '--output_path', type=str, default='all_sorted.csv')
 
 parser.add_argument('-d', '--input_dim', action="store_true", default=39)  # (n_fft // 2 + 1) or n_mel or 39
 parser.add_argument('-b', '--batch_size', action="store_true", default=64)

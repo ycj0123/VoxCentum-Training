@@ -33,9 +33,9 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 # Argument parser
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--training_dir', type=str,
-                    default='/home/itk0123/x-vector-pytorch/ckpt/0510_0125_saved_model_filtered_ecapa')
+                    default='/home/itk0123/x-vector-pytorch/ckpt/0522_0139_saved_model_filtered_ecapa/')
 parser.add_argument('-m', '--model_path', type=str,
-                    default='/home/itk0123/x-vector-pytorch/ckpt/0510_0125_saved_model_filtered_ecapa/ckpt_13_0.07809')
+                    default='/home/itk0123/x-vector-pytorch/ckpt/0522_0139_saved_model_filtered_ecapa/ckpt_0_0.2251')
 parser.add_argument('-f', '--manifest_dir', type=str,
                     default='/home/itk0123/x-vector-pytorch/manifest/manifest_filtered')
 parser.add_argument('-o', '--output', type=str, default='output')
@@ -46,14 +46,12 @@ parser.add_argument('-b', '--batch_size', action="store_true", default=32)
 args = parser.parse_args()
 
 # path related
-test_meta = os.path.join(args.manifest_dir, 'testing.txt')
 class_ids_path = os.path.join(args.manifest_dir, 'class_ids.json')
 train_config = os.path.join(args.training_dir, 'config.yaml')
 with open(train_config, "r") as f:
     config = load_hyperpyyaml(f)
 now = datetime.datetime.now()
 savepath = os.path.join('outputs', f'{now.strftime("%m%d_%H%M")}_{args.output}')
-os.makedirs(savepath, exist_ok=True)
 
 # Data related
 dataset_test = load_dataset("google/fleurs", "all", split="test")
@@ -67,6 +65,8 @@ with open(class_ids_path, "r") as f:
     num_class = len(class_ids)
 id_classes = [k for k in class_ids.keys()]
 fleurs_id_classes = [k for k in fleurs_class_ids.keys()]
+diff_cls = set(class_ids) - (set(fleurs_class_ids))
+diff_ids = [class_ids[l] for l in diff_cls]
 use_cuda = torch.cuda.is_available()
 device = torch.device("cuda" if use_cuda else "cpu")
 model = config['model'](args.input_dim, num_class).to(device)
@@ -82,20 +82,21 @@ def inference(dataloader_val):
         full_preds = []
         full_gts = []
         for i_batch, sample_batched in enumerate(tqdm(dataloader_val, dynamic_ncols=True)):
-            wfs = torch.stack(sample_batched[0])
+            wfs = torch.stack(sample_batched[0]).float()
             labels = torch.cat(sample_batched[1])
             features = config['feature'](wfs)
             features, labels = features.to(device), labels.to(device)
             pred_logits, x_vec = model(features)
+            pred_logits[:, diff_ids] = -np.inf
             predictions = np.argmax(pred_logits.detach().cpu().numpy(), axis=1)
             for pred in predictions:
                 full_preds.append(pred)
             for lab in labels.detach().cpu().numpy():
                 full_gts.append(lab)
         full_preds_code = [id_classes[i] for i in full_preds]
-        full_preds_code = ['zh-CN' if x=='zh-TW' else x for x in full_preds_code]
         full_gts_code = [fleurs_id_classes[i] for i in full_gts]
         preds_df = pd.DataFrame(data={"Predictions": full_preds_code, "Ground Truth": full_gts_code})
+        os.makedirs(savepath, exist_ok=True)
         preds_df.to_csv(os.path.join(savepath, "preds.csv"))
         mean_acc = accuracy_score(full_gts_code, full_preds_code)
         # f1s = f1_score(full_gts_code, full_preds_code, average=None)
