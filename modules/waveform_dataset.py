@@ -95,8 +95,9 @@ class FamilyWaveformDataset():
             feat = wf_augmented
         if self.transforms:
             feat = torch.squeeze(feat)
+            feat_augmented = torch.squeeze(feat_augmented)
+            sample = (feat, torch.tensor([class_id]), torch.tensor([family_id]), feat_augmented)
         else:
-            feat = torch.cat((feat, feat_augmented), dim=0)
-        
-        sample = (feat, torch.tensor([class_id]), torch.tensor([family_id]))
+            feat = torch.squeeze(feat)
+            sample = (feat, torch.tensor([class_id]), torch.tensor([family_id]))
         return sample

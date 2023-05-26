@@ -141,3 +141,4 @@ manifest*
 *log*
 *.json
 *.png
+!iso_639-1.json

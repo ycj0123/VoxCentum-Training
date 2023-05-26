@@ -30,7 +30,7 @@ from torchaudio_augmentations import *
 
 from modules.mfcc import MFCC_Delta
 from modules.utils import speech_collate, count_parameters
-from modules.waveform_dataset import WaveformDataset
+from modules.waveform_dataset import WaveformDataset, FamilyWaveformDataset
 from modules.contrastive_loss import SupConLoss
 from modules.loss import AAMsoftmax
 
@@ -65,7 +65,7 @@ transforms = Compose([
 ])
 # transforms = None
 
-dataset_train = WaveformDataset(manifest=config["training_meta"], mode='train',
+dataset_train = FamilyWaveformDataset(manifest=config["training_meta"], mode='train',
                                 min_dur_sec=config["min_dur_sec"], wf_sec=config["sample_sec"], transforms=transforms, feature=config['feature'])
 dataset_val = WaveformDataset(manifest=config["validation_meta"], mode='train',
                               min_dur_sec=config["min_dur_sec"], wf_sec=config["sample_sec"], feature=config['feature'])
@@ -110,7 +110,7 @@ model.to(device)
 
 optimizer = config["optimizer"](model.parameters())
 criterion = nn.CrossEntropyLoss()
-# criterion = AAMsoftmax()
+criterion_aux = SupConLoss()
 
 # handle checkpoint
 start_epoch = -1
@@ -150,21 +150,26 @@ def train(dataloader_train, epoch):
         if len(train_loss_list) > 0:
             pbar.set_description(desc=f"epoch {epoch}, loss={np.average(train_loss_list):.4f}")
         logging.debug(f"Taking {time.time() - start_time} seconds to load 1 batch")
-        features = torch.stack(sample_batched[0])
+        feats = torch.stack(sample_batched[0])
         labels = torch.cat(sample_batched[1])
-        # if len(sample_batched) == 3:
-        #     families = torch.cat(sample_batched[2])
-        #     families = families.to(device)
-        features, labels = features.to(device), labels.to(device)
-        features.requires_grad = True
+        bsz = labels.shape[0]
+        if len(sample_batched) >= 3:
+            families = torch.cat(sample_batched[2])
+            families = families.to(device)
+        if len(sample_batched) == 4:
+            feats_aug = torch.stack(sample_batched[3])
+            feats = torch.cat((feats,feats_aug), dim=0)
+            labels = torch.cat((labels, labels))
+        feats, labels = feats.to(device), labels.to(device)
+        feats.requires_grad = True
         optimizer.zero_grad()
-        pred_logits, x_vecs = model(features)  # x_vec = B x Dim
-        # _, x_vec_orig = model(features_orig)  # x_vec = B x Dim
+        pred_logits, x_vecs = model(feats)  # x_vec = B x Dim
         # CE loss
-        loss = criterion(pred_logits, labels)
-        # loss_1 = con_loss(torch.stack((x_vec, x_vec_orig), 1), families)
-        # loss_1 = con_loss(torch.unsqueeze(x_vec, 1), families)
-        # loss = loss_0 + 0.01*loss_1
+        loss_prim = criterion(pred_logits, labels)
+        # supcon
+        x_vecs_nviews = torch.stack(torch.split(x_vecs, [bsz, bsz], dim=0), dim=1)
+        loss_aux = criterion_aux(x_vecs_nviews, labels[:bsz])
+        loss = loss_prim + 0.1*loss_aux
         loss.backward()
         optimizer.step()
         train_loss_list.append(loss.item())

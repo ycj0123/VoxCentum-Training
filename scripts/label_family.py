@@ -49,3 +49,5 @@ manifest_val.to_csv(os.path.join(output_dir, "validation.txt"), sep=' ', header=
 manifest_train.to_csv(os.path.join(output_dir, "training.txt"), sep=' ', header=None, index=None)
 with open(os.path.join(output_dir, "family_ids.json"), "w+") as f:
     json.dump(families, f, indent=4)
+with open(os.path.join(output_dir, "class_ids.json"), "w+") as f:
+    json.dump(class_ids, f, indent=4)
