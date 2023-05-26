@@ -155,10 +155,6 @@ def train(dataloader_train, epoch):
         # if len(sample_batched) == 3:
         #     families = torch.cat(sample_batched[2])
         #     families = families.to(device)
-        # elif len(sample_batched) == 4:
-        #     features_orig = torch.stack(sample_batched[2])
-        #     families = torch.cat(sample_batched[3])
-        #     features_orig, families = features_orig.to(device), families.to(device)
         features, labels = features.to(device), labels.to(device)
         features.requires_grad = True
         optimizer.zero_grad()

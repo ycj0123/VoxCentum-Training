@@ -3,8 +3,8 @@ import os
 from tqdm import tqdm
 
 
-manifest_orig = pd.read_csv('manifest/manifest_all_alltrain/training.txt', sep=' ')
-output_dir = 'manifest_filtered_random'
+manifest_orig = pd.read_csv('/home/ycj0123/x-vector-pytorch/manifest/all_new_alltrain/training.txt', sep=' ')
+output_dir = 'new_random'
 
 first = True
 for i in tqdm(range(137)):

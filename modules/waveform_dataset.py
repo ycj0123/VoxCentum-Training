@@ -21,7 +21,6 @@ class WaveformDataset():
         """
         Read the textfile and get the paths
         """
-        # self.mode=mode
         self.audio_links = [line.rstrip('\n').split(' ')[0] for line in open(manifest)]
         self.labels = [int(line.rstrip('\n').split(' ')[1]) for line in open(manifest)]
         self.mode = mode
@@ -62,7 +61,6 @@ class FamilyWaveformDataset():
         """
         Read the textfile and get the paths
         """
-        # self.mode=mode
         self.audio_links = [line.rstrip('\n').split(' ')[0] for line in open(manifest)]
         self.labels = [int(line.rstrip('\n').split(' ')[1]) for line in open(manifest)]
         self.families = [int(line.rstrip('\n').split(' ')[2]) for line in open(manifest)]
@@ -80,19 +78,25 @@ class FamilyWaveformDataset():
         audio_link = self.audio_links[idx]
         class_id = self.labels[idx]
         family_id = self.families[idx]
-        # spec = utils.load_data(audio_link,mode='train', n_fft=512, spec_len=400)
         if self.mode == 'train':
             waveform = utils.load_waveform(audio_link, mode='train',
                                            min_dur_sec=self.min_dur_sec, wf_sec=self.wf_sec)
         else:
             waveform = utils.load_waveform(audio_link, mode='test')
         waveform = torch.unsqueeze(waveform, 0).float()
+        if self.transforms:
+            wf_augmented = self.transforms(waveform)
+        else:
+            wf_augmented = waveform
         if self.feature:
             feat = self.feature(waveform)
+            feat_augmented = self.feature(wf_augmented)
         else:
-            feat = waveform
-        feat = torch.squeeze(feat)
-        feat_trans = self.transforms(waveform)
-        feat_trans = torch.squeeze(feat_trans)
-        sample = (feat_trans, torch.tensor([class_id]), feat, torch.tensor([family_id]))
+            feat = wf_augmented
+        if self.transforms:
+            feat = torch.squeeze(feat)
+        else:
+            feat = torch.cat((feat, feat_augmented), dim=0)
+        
+        sample = (feat, torch.tensor([class_id]), torch.tensor([family_id]))
         return sample
