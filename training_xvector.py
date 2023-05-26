@@ -57,11 +57,11 @@ transforms = Compose([
     RandomApply([Gain()], p=0.2),
     RandomApply([HighLowPass(sample_rate=16000)], p=0.4),
     # RandomApply([Delay(sample_rate=16000)], p=0.4),
-    RandomApply([PitchShift(
-        n_samples=80000,
-        sample_rate=16000
-    )], p=0.4),
-    RandomApply([Reverb(sample_rate=16000)], p=0.4)
+    # RandomApply([PitchShift(
+    #     n_samples=80000,
+    #     sample_rate=16000
+    # )], p=0.4),
+    # RandomApply([Reverb(sample_rate=16000)], p=0.4)
 ])
 # transforms = None
 
@@ -169,7 +169,7 @@ def train(dataloader_train, epoch):
         # supcon
         x_vecs_nviews = torch.stack(torch.split(proj, [bsz, bsz], dim=0), dim=1)
         loss_aux = criterion_aux(x_vecs_nviews, labels[:bsz])
-        loss = loss_prim + 0.1*loss_aux
+        loss = loss_prim + 0.5*loss_aux
         loss.backward()
         optimizer.step()
         train_loss_list.append(loss.item())

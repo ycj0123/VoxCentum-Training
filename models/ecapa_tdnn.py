@@ -205,11 +205,11 @@ class ECAPA_TDNN(nn.Module):
         return preds, embedding
 
 
-class ECAPA_TDNN_SupCon(nn.Module):
+class ECAPA_TDNN_SupCon(ECAPA_TDNN):
 
     def __init__(self, input_dim, num_class, C=512):
 
-        super(ECAPA_TDNN_SupCon, self).__init__()
+        super(ECAPA_TDNN_SupCon, self).__init__(input_dim, num_class, C)
         self.proj = nn.Sequential(
             nn.Linear(192, 192),
             nn.ReLU(),

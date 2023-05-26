@@ -1,27 +1,35 @@
 import pandas as pd
 import os
 from tqdm import tqdm
+import shutil
 
-
-manifest_orig = pd.read_csv('/home/ycj0123/x-vector-pytorch/manifest/all_new_alltrain/training.txt', sep=' ')
-output_dir = 'new_random'
+manifest_dirs = ['/home/ycj0123/x-vector-pytorch/manifest/new_random/testing.txt',
+                 '/home/ycj0123/x-vector-pytorch/manifest/new_random/training.txt',
+                 '/home/ycj0123/x-vector-pytorch/manifest/new_random/validation.txt']
+manifest_origs = [pd.read_csv(dir, sep=' ', names=['Path', 'Gt']) for dir in manifest_dirs]
+manifest_orig = pd.concat(manifest_origs, axis=0, ignore_index=True)
+print(manifest_orig)
+output_dir = '/home/ycj0123/x-vector-pytorch/manifest/new_random_40'
+threshold_hour, train_hour, val_test_hour = 50, 40, 2
+threshold_n, train_n, val_test_n = threshold_hour*360, train_hour*360, val_test_hour*360
+filter_ratio, train_ratio, val_ratio = 1, 0.9, 0.5  # val = (1 - train_ratio) * val_ratio
 
 first = True
 for i in tqdm(range(137)):
     lang = manifest_orig[manifest_orig.iloc[:, 1] == i]
     if not lang.empty:
-        if len(lang) > 46800:
-            lang = lang.sample(39600)
-            lang_train = lang.sample(36000)
+        if len(lang) > threshold_n:
+            lang = lang.sample(train_n+(2*val_test_n))
+            lang_train = lang.sample(train_n)
             lang_valtest = lang.drop(lang_train.index)
-            lang_val = lang_valtest.sample(1800)
+            lang_val = lang_valtest.sample(val_test_n)
             lang_test = lang_valtest.drop(lang_val.index)
         else:
-            keep = int(len(lang) * 0.85)
+            keep = int(len(lang) * filter_ratio)
             lang = lang.sample(keep)
-            lang_train = lang.sample(frac=0.9)
+            lang_train = lang.sample(frac=train_ratio)
             lang_valtest = lang.drop(lang_train.index)
-            lang_val = lang_valtest.sample(frac=0.5)
+            lang_val = lang_valtest.sample(frac=val_ratio)
             lang_test = lang_valtest.drop(lang_val.index)
 
         if first:
