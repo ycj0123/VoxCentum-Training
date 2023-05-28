@@ -220,4 +220,4 @@ class ECAPA_TDNN_SupCon(ECAPA_TDNN):
         preds, embedding = super(ECAPA_TDNN_SupCon, self).forward(x)
         proj = self.output(embedding)
 
-        return preds, proj, embedding
+        return preds, proj

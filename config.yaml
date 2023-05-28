@@ -9,7 +9,7 @@ training_meta: manifest/new_random_40_family/training.txt
 validation_meta: manifest/new_random_40_family/validation.txt
 class_ids: manifest/new_random_40_family/class_ids.json
 checkpoint: null # will keep training if not `null`
-save_path: saved_model_contrast_ecapa # actual name will be ckpt/mmdd_savepath
+save_path: saved_model_contrast_ecapa_128 # actual name will be ckpt/mmdd_savepath
 
 # dataloader
 train:

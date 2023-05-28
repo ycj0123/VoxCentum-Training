@@ -3,8 +3,8 @@ import pandas as pd
 from tqdm import tqdm
 import os
 
-input_dir = '/home/ycj0123/x-vector-pytorch/manifest/new_random_40'
-output_dir = '/home/ycj0123/x-vector-pytorch/manifest/new_random_40_family'
+input_dir = '/home/ycj0123/x-vector-pytorch/manifest/new_random_40_'
+output_dir = '/home/ycj0123/x-vector-pytorch/manifest/new_random_40_family_'
 
 with open("/home/ycj0123/x-vector-pytorch/iso_639-1.json", "r") as f:
     family_dict = json.load(f)

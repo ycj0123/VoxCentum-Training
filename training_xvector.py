@@ -46,6 +46,7 @@ with open(sys.argv[1], "r") as f:
     config = load_hyperpyyaml(f)
 now = datetime.datetime.now()
 savepath = os.path.join('ckpt', f'{now.strftime("%m%d_%H%M")}_{config["save_path"]}')
+logging.info(f'Checkpoints will be saved to {savepath}.')
 os.makedirs(savepath, exist_ok=True)
 shutil.copy(os.path.abspath(sys.argv[1]), os.path.abspath(savepath))
 writer = SummaryWriter(log_dir=f'{savepath}/log')
@@ -56,7 +57,7 @@ transforms = Compose([
     RandomApply([Noise()], p=0.2),
     RandomApply([Gain()], p=0.2),
     RandomApply([HighLowPass(sample_rate=16000)], p=0.4),
-    # RandomApply([Delay(sample_rate=16000)], p=0.4),
+    RandomApply([Delay(sample_rate=16000)], p=0.4),
     # RandomApply([PitchShift(
     #     n_samples=80000,
     #     sample_rate=16000
@@ -163,14 +164,15 @@ def train(dataloader_train, epoch):
         feats, labels = feats.to(device), labels.to(device)
         feats.requires_grad = True
         optimizer.zero_grad()
-        pred_logits, proj, emb = model(feats)  # x_vec = B x Dim
+        pred_logits, emb = model(feats)  # x_vec = B x Dim
         # CE loss
-        loss_prim = criterion(pred_logits, labels)
-        # supcon
-        x_vecs_nviews = torch.stack(torch.split(proj, [bsz, bsz], dim=0), dim=1)
-        loss_aux = criterion_aux(x_vecs_nviews, labels[:bsz])
-        loss = loss_prim + 0.5*loss_aux
+        loss = criterion(pred_logits, labels)
         loss.backward()
+        # supcon
+        x_vecs_nviews = torch.stack(torch.split(emb, [bsz, bsz], dim=0), dim=1)
+        loss_aux = criterion_aux(x_vecs_nviews, labels[:bsz])
+        loss_aux = 0.5*loss_aux
+        loss_aux.backward()
         optimizer.step()
         train_loss_list.append(loss.item())
 
