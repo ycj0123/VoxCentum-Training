@@ -3,10 +3,10 @@ import pandas as pd
 from tqdm import tqdm
 import os
 
-input_dir = '/home/ycj0123/x-vector-pytorch/manifest/new_random_40_'
-output_dir = '/home/ycj0123/x-vector-pytorch/manifest/new_random_40_family_'
+input_dir = '/home/itk0123/x-vector-pytorch/manifest/manifest_random_40_local'
+output_dir = '/home/itk0123/x-vector-pytorch/manifest/manifest_random_40_local_family'
 
-with open("/home/ycj0123/x-vector-pytorch/iso_639-1.json", "r") as f:
+with open("/home/itk0123/x-vector-pytorch/iso_639-1.json", "r") as f:
     family_dict = json.load(f)
 
 manifest_test = pd.read_csv(os.path.join(input_dir, "testing.txt"), sep=' ', header=None)

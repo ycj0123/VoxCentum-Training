@@ -2,13 +2,13 @@ import pandas as pd
 import os
 from tqdm import tqdm
 
-manifest_dirs = ['/home/ycj0123/x-vector-pytorch/manifest/new_random/testing.txt',
-                 '/home/ycj0123/x-vector-pytorch/manifest/new_random/training.txt',
-                 '/home/ycj0123/x-vector-pytorch/manifest/new_random/validation.txt']
+manifest_dirs = ['/home/itk0123/x-vector-pytorch/manifest/manifest_random/testing.txt',
+                 '/home/itk0123/x-vector-pytorch/manifest/manifest_random/training.txt',
+                 '/home/itk0123/x-vector-pytorch/manifest/manifest_random/validation.txt']
 manifest_origs = [pd.read_csv(dir, sep=' ', names=['Path', 'Gt']) for dir in manifest_dirs]
 manifest_orig = pd.concat(manifest_origs, axis=0, ignore_index=True)
 print(manifest_orig)
-output_dir = '/home/ycj0123/x-vector-pytorch/manifest/new_random_40_'
+output_dir = '/home/itk0123/x-vector-pytorch/manifest/manifest_random_40_local'
 threshold_hour, train_hour, val_test_hour = 44, 40, 2
 threshold_n, train_n, val_test_n = threshold_hour*360, train_hour*360, val_test_hour*360
 filter_ratio, train_ratio, val_ratio = 1, 0.9, 0.5  # val = (1 - train_ratio) * val_ratio

@@ -8,6 +8,7 @@ import torch
 import torchaudio
 import torch.nn as nn
 import torch.nn.functional as F
+from torch.utils.checkpoint import checkpoint
 
 
 class SEModule(nn.Module):
@@ -216,8 +217,11 @@ class ECAPA_TDNN_SupCon(ECAPA_TDNN):
             nn.Linear(192, 128)
         )
 
-    def forward(self, x):
+    def custom_forward(self, x):
         preds, embedding = super(ECAPA_TDNN_SupCon, self).forward(x)
-        proj = self.output(embedding)
+        proj = self.proj(embedding)
 
         return preds, proj
+    
+    def forward(self, x):
+        return torch.utils.checkpoint.checkpoint(self.custom_forward, x)

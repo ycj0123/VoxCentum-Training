@@ -50,6 +50,8 @@ logging.info(f'Checkpoints will be saved to {savepath}.')
 os.makedirs(savepath, exist_ok=True)
 shutil.copy(os.path.abspath(sys.argv[1]), os.path.abspath(savepath))
 writer = SummaryWriter(log_dir=f'{savepath}/log')
+scaler = torch.cuda.amp.GradScaler()
+torch.backends.cudnn.benchmark = True
 
 # Data related
 transforms = Compose([
@@ -136,6 +138,7 @@ if config['checkpoint'] is not None:
     start_epoch = ckpt['epoch']
     start_step = ckpt['step']
     logging.info(f'Start training from epoch {start_epoch+1} with checkpoint "{config["checkpoint"]}".')
+    del ckpt
 else:
     logging.info(f'Start training from scratch.')
 
@@ -164,16 +167,28 @@ def train(dataloader_train, epoch):
         feats, labels = feats.to(device), labels.to(device)
         feats.requires_grad = True
         optimizer.zero_grad()
-        pred_logits, emb = model(feats)  # x_vec = B x Dim
-        # CE loss
-        loss = criterion(pred_logits, labels)
-        loss.backward()
-        # supcon
-        x_vecs_nviews = torch.stack(torch.split(emb, [bsz, bsz], dim=0), dim=1)
-        loss_aux = criterion_aux(x_vecs_nviews, labels[:bsz])
-        loss_aux = 0.5*loss_aux
-        loss_aux.backward()
-        optimizer.step()
+        with torch.cuda.amp.autocast():
+            pred_logits, emb = model(feats)
+            # CE loss
+            loss = criterion(pred_logits, labels)
+            # SupCon
+            x_vecs_nviews = torch.stack(torch.split(emb, [bsz, bsz], dim=0), dim=1)
+            loss_aux = criterion_aux(x_vecs_nviews, labels[:bsz])
+            loss += 0.5*loss_aux
+        # pred_logits, emb = model(feats)  # x_vec = B x Dim
+        # # CE loss
+        # loss = criterion(pred_logits, labels)
+        # # SupCon
+        # x_vecs_nviews = torch.stack(torch.split(emb, [bsz, bsz], dim=0), dim=1)
+        # loss_aux = criterion_aux(x_vecs_nviews, labels[:bsz])
+        # loss += 0.5*loss_aux
+
+        # loss.backward()
+        scaler.scale(loss).backward()
+        # optimizer.step()
+        scaler.step(optimizer)
+        scaler.update()
+
         train_loss_list.append(loss.item())
 
         predictions = np.argmax(pred_logits.detach().cpu().numpy(), axis=1)
