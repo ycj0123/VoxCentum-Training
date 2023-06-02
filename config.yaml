@@ -5,28 +5,34 @@
 # See https://github.com/speechbrain/HyperPyYAML for more
 
 # Path related
-training_meta: manifest/manifest_random_40_local_family/training.txt
-validation_meta: manifest/manifest_random_40_local_family/validation.txt
-class_ids: manifest/manifest_random_40_local_family/class_ids.json
-checkpoint: null # will keep training if not `null`
-save_path: saved_model_contrast_ecapa_96 # actual name will be ckpt/mmdd_savepath
+training_meta: manifest/new_all/training.txt
+validation_meta: manifest/new_all/validation.txt
+class_ids: manifest/new_all/class_ids.json
+checkpoint:  ckpt/0601_1459_saved_model_new_all_ecapa/ckpt_5_0.4039 # will keep training if not `null`
+save_path: saved_model_new_all_ecapa # actual name will be ckpt/mmdd_savepath
 
-# dataloader
+# dataset & dataloader
+trainset: !name:modules.waveform_dataset.WaveformDataset
 train:
-    num_workers: 12
-    batch_size: 96
+    num_workers: 16
+    batch_size: 256
 val:
-    num_workers: 12
-    batch_size: 192
+    num_workers: 16
+    batch_size: 512
 
 # network
-model: !name:models.ecapa_tdnn.ECAPA_TDNN_SupCon
+model: !name:models.ecapa_tdnn.ECAPA_TDNN
 # model: !name:models.x_vector.X_vector
 num_epochs: 50
 # always saves the best valid checkpoint despite save_epoch and save_step
 # save_step is prioritized
 save_epoch: 1
 save_step: null # int or `null`
+
+# loss
+CE: True
+SupCon: False
+Beta: 1 #SupCon's ratio relative to CE
 
 # optimizer
 optimizer: !name:torch.optim.Adam
@@ -72,22 +78,3 @@ feature: !new:modules.mfcc.MFCC_Delta
             power: !ref <power>
 
 #  ====================== </feature> ======================
-
-# # data augmentation
-# timemasking: !new:torchaudio.transforms.TimeMasking
-#     time_mask_param: 5
-#     p: 0.5
-
-# freqmasking: !new:torchaudio.transforms.FrequencyMasking
-#     freq_mask_param: 10
-
-# # combine feature with data augmentation
-# transforms:
-#     names: 
-#         - feature
-#         - time_masking
-#         - freq_masking
-#     modules:
-#         - !ref <feature>
-#         - !ref <timemasking>
-#         - !ref <freqmasking>

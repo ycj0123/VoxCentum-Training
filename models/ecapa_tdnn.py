@@ -217,11 +217,11 @@ class ECAPA_TDNN_SupCon(ECAPA_TDNN):
             nn.Linear(192, 128)
         )
 
-    def custom_forward(self, x):
+    def forward(self, x):
         preds, embedding = super(ECAPA_TDNN_SupCon, self).forward(x)
         proj = self.proj(embedding)
 
         return preds, proj
     
-    def forward(self, x):
-        return torch.utils.checkpoint.checkpoint(self.custom_forward, x)
+    # def forward(self, x):
+    #     return torch.utils.checkpoint.checkpoint(self.custom_forward, x)

@@ -8,13 +8,14 @@ Created on Sat Jul 20 14:09:31 2019
 import numpy as np
 import torch
 import logging
+from torch.utils.data import Dataset
 
 from modules import utils
 
 logger = logging.getLogger(__name__)
 
 
-class WaveformDataset():
+class WaveformDataset(Dataset):
     """Speech dataset."""
 
     def __init__(self, manifest, mode, min_dur_sec=None, wf_sec=None, transforms=None, feature=None):
@@ -54,25 +55,15 @@ class WaveformDataset():
         sample = (feat, torch.tensor([class_id]))
         return sample
 
-class FamilyWaveformDataset():
+class FamilyWaveformDataset(WaveformDataset):
     """Speech dataset."""
 
     def __init__(self, manifest, mode, min_dur_sec=None, wf_sec=None, feature=None, transforms=None):
         """
         Read the textfile and get the paths
         """
-        self.audio_links = [line.rstrip('\n').split(' ')[0] for line in open(manifest)]
-        self.labels = [int(line.rstrip('\n').split(' ')[1]) for line in open(manifest)]
+        super(FamilyWaveformDataset).__init__(manifest, mode, min_dur_sec, wf_sec, feature, transforms)
         self.families = [int(line.rstrip('\n').split(' ')[2]) for line in open(manifest)]
-        self.mode = mode
-        if mode == 'train':
-            self.min_dur_sec = min_dur_sec
-            self.wf_sec = wf_sec
-        self.feature = feature
-        self.transforms = transforms
-
-    def __len__(self):
-        return len(self.audio_links)
 
     def __getitem__(self, idx):
         audio_link = self.audio_links[idx]

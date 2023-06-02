@@ -33,16 +33,17 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 # Argument parser
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--training_dir', type=str,
-                    default='/home/itk0123/x-vector-pytorch/ckpt/0426_1714_saved_model_ecapa/')
+                    default='/home/ycj0123/x-vector-pytorch/ckpt/0601_1459_saved_model_new_all_ecapa')
 parser.add_argument('-m', '--model_path', type=str,
-                    default='/home/itk0123/x-vector-pytorch/ckpt/0426_1714_saved_model_ecapa/ckpt_1_0.407')
+                    default='/home/ycj0123/x-vector-pytorch/ckpt/0601_1459_saved_model_new_all_ecapa/ckpt_5_0.4039')
 parser.add_argument('-f', '--manifest_dir', type=str,
-                    default='/home/itk0123/x-vector-pytorch/manifest/')
-parser.add_argument('-o', '--output', type=str, default='output_all_1_fleurs')
+                    default='/home/ycj0123/x-vector-pytorch/manifest/new_all')
+parser.add_argument('-o', '--output', type=str, default='output_all_5_fleurs_modlogit')
 
 
 parser.add_argument('-d', '--input_dim', action="store_true", default=39)  # (n_fft // 2 + 1) or n_mel or 39
 parser.add_argument('-b', '--batch_size', action="store_true", default=64)
+parser.add_argument('-w', '--num_workers', action="store_true", default=16)
 args = parser.parse_args()
 
 # path related
@@ -55,7 +56,7 @@ savepath = os.path.join('outputs', f'{now.strftime("%m%d_%H%M")}_{args.output}')
 
 # Data related
 dataset_test = load_dataset("google/fleurs", "all", split="test")
-dataloader_test = DataLoader(dataset_test, batch_size=args.batch_size, shuffle=False, collate_fn=fleurs_collate_pad)
+dataloader_test = DataLoader(dataset_test, batch_size=args.batch_size, shuffle=False, collate_fn=fleurs_collate_pad, num_workers=args.num_workers)
 
 # Model related
 with open("manifest/fleurs/class_ids.json", "r") as f:

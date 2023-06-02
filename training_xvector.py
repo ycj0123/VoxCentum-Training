@@ -36,7 +36,6 @@ from modules.AAM_softmax_loss import AAMsoftmax
 
 
 torch.multiprocessing.set_sharing_strategy('file_system')
-# family = {'Chinese': {1, 5, 6}, 'European': {0, 2, 3, 4}}
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
 
@@ -55,20 +54,20 @@ torch.backends.cudnn.benchmark = True
 
 # Data related
 transforms = Compose([
-    # RandomApply([PolarityInversion()], p=0.2),
+    RandomApply([PolarityInversion()], p=0.2),
     RandomApply([Noise()], p=0.2),
     RandomApply([Gain()], p=0.2),
     RandomApply([HighLowPass(sample_rate=16000)], p=0.4),
     RandomApply([Delay(sample_rate=16000)], p=0.4),
-    # RandomApply([PitchShift(
-    #     n_samples=80000,
-    #     sample_rate=16000
-    # )], p=0.4),
-    # RandomApply([Reverb(sample_rate=16000)], p=0.4)
+    RandomApply([PitchShift(
+        n_samples=80000,
+        sample_rate=16000
+    )], p=0.4),
+    RandomApply([Reverb(sample_rate=16000)], p=0.4)
 ])
 # transforms = None
 
-dataset_train = FamilyWaveformDataset(manifest=config["training_meta"], mode='train',
+dataset_train = config['trainset'](manifest=config["training_meta"], mode='train',
                                 min_dur_sec=config["min_dur_sec"], wf_sec=config["sample_sec"], transforms=transforms, feature=config['feature'])
 dataset_val = WaveformDataset(manifest=config["validation_meta"], mode='train',
                               min_dur_sec=config["min_dur_sec"], wf_sec=config["sample_sec"], feature=config['feature'])
@@ -112,8 +111,10 @@ else:
 model.to(device)
 
 optimizer = config["optimizer"](model.parameters())
-criterion = nn.CrossEntropyLoss()
-criterion_aux = SupConLoss()
+if config['CE'] == True:
+    criterion = nn.CrossEntropyLoss()
+if config['SupCon'] == True:
+    criterion_aux = SupConLoss()
 
 # handle checkpoint
 start_epoch = -1
@@ -167,14 +168,19 @@ def train(dataloader_train, epoch):
         feats, labels = feats.to(device), labels.to(device)
         feats.requires_grad = True
         optimizer.zero_grad()
-        with torch.cuda.amp.autocast():
-            pred_logits, emb = model(feats)
+        with torch.cuda.amp.autocast(enabled=False):
+            pred_logits, emb = model(feats) # x_vec = B x Dim
             # CE loss
-            loss = criterion(pred_logits, labels)
+            if config['CE'] == True:
+                loss = criterion(pred_logits, labels)
             # SupCon
-            x_vecs_nviews = torch.stack(torch.split(emb, [bsz, bsz], dim=0), dim=1)
-            loss_aux = criterion_aux(x_vecs_nviews, labels[:bsz])
-            loss += 0.5*loss_aux
+            if config['SupCon'] == True:
+                x_vecs_nviews = torch.stack(torch.split(emb, [bsz, bsz], dim=0), dim=1)
+                loss_aux = criterion_aux(x_vecs_nviews, families)
+            if (config['CE'] and config['SupCon']) == True:
+                loss += float(config['Beta']) * loss_aux
+            elif config['SupCon'] == True:
+                loss = loss_aux
         # pred_logits, emb = model(feats)  # x_vec = B x Dim
         # # CE loss
         # loss = criterion(pred_logits, labels)
@@ -183,13 +189,16 @@ def train(dataloader_train, epoch):
         # loss_aux = criterion_aux(x_vecs_nviews, labels[:bsz])
         # loss += 0.5*loss_aux
 
-        # loss.backward()
-        scaler.scale(loss).backward()
-        # optimizer.step()
-        scaler.step(optimizer)
-        scaler.update()
-
-        train_loss_list.append(loss.item())
+        if not np.isnan(loss.detach().cpu().numpy()):
+            # loss.backward()
+            scaler.scale(loss).backward()
+            # optimizer.step()
+            scaler.step(optimizer)
+            scaler.update()
+            
+            train_loss_list.append(loss.item())
+        else:
+            logging.warning('Training loss is nan. Skip updating model with this batch.')
 
         predictions = np.argmax(pred_logits.detach().cpu().numpy(), axis=1)
         for pred in predictions:
