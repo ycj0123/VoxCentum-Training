@@ -130,7 +130,7 @@ if config['checkpoint'] is not None:
         optimizer.load_state_dict(ckpt['optimizer'])
     except:
         # load without the last layer
-        logging.info(f'Model shape does not fit. Try loading without the last layer.')
+        logging.info(f'Model shape does not fit. Trying loading without the last layer.')
         del ckpt['model']['output.weight']
         del ckpt['model']['output.bias']
         if torch.cuda.device_count() > 1:
@@ -178,7 +178,8 @@ def train(dataloader_train, epoch):
             # SupCon
             if config['SupCon'] == True:
                 x_vecs_nviews = torch.stack(torch.split(emb, [bsz, bsz], dim=0), dim=1)
-                loss_aux = criterion_aux(x_vecs_nviews, labels=families)
+                loss_aux = criterion_aux(x_vecs_nviews, labels=labels[:bsz], family=families)
+                # loss_aux = criterion_aux(x_vecs_nviews, labels=families)
                 # loss_aux = criterion_aux(x_vecs_nviews, labels[:bsz])
             if (config['CE'] and config['SupCon']) == True:
                 loss += float(config['Beta']) * loss_aux
