@@ -84,6 +84,7 @@ class SupConLoss(nn.Module):
             if family.shape[0] != batch_size:
                 raise ValueError('Num of family does not match num of features')
             family_eq = torch.eq(family, family.T).float().to(device)
+            family_eq = family_eq.repeat(anchor_count, contrast_count)
             logits_mask = torch.scatter(
                 family_eq,
                 1,

@@ -178,9 +178,9 @@ def train(dataloader_train, epoch):
             # SupCon
             if config['SupCon'] == True:
                 x_vecs_nviews = torch.stack(torch.split(emb, [bsz, bsz], dim=0), dim=1)
-                loss_aux = criterion_aux(x_vecs_nviews, labels=labels[:bsz], family=families)
+                # loss_aux = criterion_aux(x_vecs_nviews, labels=labels[:bsz], family=families)
                 # loss_aux = criterion_aux(x_vecs_nviews, labels=families)
-                # loss_aux = criterion_aux(x_vecs_nviews, labels[:bsz])
+                loss_aux = criterion_aux(x_vecs_nviews, labels[:bsz])
             if (config['CE'] and config['SupCon']) == True:
                 loss += float(config['Beta']) * loss_aux
             elif config['SupCon'] == True:
