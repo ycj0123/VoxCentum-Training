@@ -3,22 +3,24 @@ import os
 from tqdm import tqdm
 
 
-preds = pd.read_csv('output.csv', index_col=0)
-output_dir = 'manifest_filtered'
+preds = pd.read_csv('new_all_13_sorted.csv', index_col=0)
+output_dir = 'new_manifest_filtered'
+threshold_hour, train_hour, val_test_hour = 110, 100, 5
+threshold_n, train_n, val_test_n = threshold_hour*360, train_hour*360, val_test_hour*360
+filter_ratio, train_ratio, val_ratio = 0.99, 0.9, 0.5  # val = (1 - train_ratio) * val_ratio
 
 first = True
 for i in tqdm(range(138)):
     lang = preds[preds['Ground Truth'] == i]
     if not lang.empty:
-        if len(lang) > 46800:
-            lang = lang.iloc[-39600:]
-            lang_train = lang.sample(36000)
+        keep = int(len(lang) * filter_ratio)
+        lang = lang.iloc[-keep:]
+        if len(lang) > threshold_n:
+            lang_train = lang.sample(train_n)
             lang_valtest = lang.drop(lang_train.index)
-            lang_val = lang_valtest.sample(1800)
-            lang_test = lang_valtest.drop(lang_val.index)
+            lang_val = lang_valtest.sample(val_test_n)
+            lang_test = lang_valtest.drop(lang_val.index).sample(val_test_n)
         else:
-            keep = int(len(lang) * 0.85)
-            lang = lang.iloc[-keep:]
             lang_train = lang.sample(frac=0.9)
             lang_valtest = lang.drop(lang_train.index)
             lang_val = lang_valtest.sample(frac=0.5)

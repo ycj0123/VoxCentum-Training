@@ -34,7 +34,6 @@ from modules.waveform_dataset import WaveformDataset, FamilyWaveformDataset
 from modules.contrastive_loss import SupConLoss
 from modules.AAM_softmax_loss import AAMsoftmax
 
-
 torch.multiprocessing.set_sharing_strategy('file_system')
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] - %(message)s',
                     datefmt='%Y-%m-%d %H:%M:%S')
@@ -48,6 +47,8 @@ savepath = os.path.join('ckpt', f'{now.strftime("%m%d_%H%M")}_{config["save_path
 logging.info(f'Checkpoints will be saved to {savepath}.')
 os.makedirs(savepath, exist_ok=True)
 shutil.copy(os.path.abspath(sys.argv[1]), os.path.abspath(savepath))
+shutil.copy(os.path.abspath(__file__), os.path.abspath(savepath))
+
 writer = SummaryWriter(log_dir=f'{savepath}/log')
 scaler = torch.cuda.amp.GradScaler()
 torch.backends.cudnn.benchmark = True
@@ -74,10 +75,10 @@ dataset_val = WaveformDataset(manifest=config["validation_meta"], mode='train',
 
 dataloader_train = DataLoader(dataset_train, batch_size=config["train"]["batch_size"],
                               num_workers=config["train"]["num_workers"], shuffle=True,
-                              collate_fn=speech_collate, pin_memory=True)
+                              collate_fn=speech_collate) #, pin_memory=True)
 dataloader_val = DataLoader(dataset_val, batch_size=config["val"]["batch_size"],
                             num_workers=config["val"]["num_workers"], shuffle=False,
-                            collate_fn=speech_collate, pin_memory=True)
+                            collate_fn=speech_collate) #, pin_memory=True)
 
 # Model related
 use_cuda = torch.cuda.is_available()
@@ -129,6 +130,7 @@ if config['checkpoint'] is not None:
         optimizer.load_state_dict(ckpt['optimizer'])
     except:
         # load without the last layer
+        logging.info(f'Model shape does not fit. Try loading without the last layer.')
         del ckpt['model']['output.weight']
         del ckpt['model']['output.bias']
         if torch.cuda.device_count() > 1:
@@ -176,7 +178,8 @@ def train(dataloader_train, epoch):
             # SupCon
             if config['SupCon'] == True:
                 x_vecs_nviews = torch.stack(torch.split(emb, [bsz, bsz], dim=0), dim=1)
-                loss_aux = criterion_aux(x_vecs_nviews, families)
+                loss_aux = criterion_aux(x_vecs_nviews, labels=families)
+                # loss_aux = criterion_aux(x_vecs_nviews, labels[:bsz])
             if (config['CE'] and config['SupCon']) == True:
                 loss += float(config['Beta']) * loss_aux
             elif config['SupCon'] == True:

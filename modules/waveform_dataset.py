@@ -55,6 +55,7 @@ class WaveformDataset(Dataset):
         sample = (feat, torch.tensor([class_id]))
         return sample
 
+
 class FamilyWaveformDataset(WaveformDataset):
     """Speech dataset."""
 
@@ -62,7 +63,8 @@ class FamilyWaveformDataset(WaveformDataset):
         """
         Read the textfile and get the paths
         """
-        super(FamilyWaveformDataset).__init__(manifest, mode, min_dur_sec, wf_sec, feature, transforms)
+        super(FamilyWaveformDataset, self).__init__(manifest, mode, min_dur_sec=min_dur_sec,
+                                                    wf_sec=wf_sec, transforms=transforms, feature=feature)
         self.families = [int(line.rstrip('\n').split(' ')[2]) for line in open(manifest)]
 
     def __getitem__(self, idx):

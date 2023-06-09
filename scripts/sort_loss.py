@@ -30,13 +30,14 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 # Argument parser
 parser = argparse.ArgumentParser()
-parser.add_argument('-t', '--training_dir', type=str, default='/home/itk0123/x-vector-pytorch/ckpt/0426_1714_saved_model_ecapa/')
-parser.add_argument('-m', '--model_path', type=str, default='/home/itk0123/x-vector-pytorch/ckpt/0426_1714_saved_model_ecapa/ckpt_10_0.2803')
-parser.add_argument('-f', '--manifest_dir', type=str, default='/home/itk0123/x-vector-pytorch/manifest/manifest_all_alltrain_relabel')
-parser.add_argument('-o', '--output_path', type=str, default='all_sorted.csv')
+parser.add_argument('-t', '--training_dir', type=str, default='/home/ycj0123/x-vector-pytorch/ckpt/0605_0124_saved_model_new_all_ecapa/')
+parser.add_argument('-m', '--model_path', type=str, default='/home/ycj0123/x-vector-pytorch/ckpt/0605_0124_saved_model_new_all_ecapa/ckpt_13_0.3387')
+parser.add_argument('-f', '--manifest_dir', type=str, default='/home/ycj0123/x-vector-pytorch/manifest/new_all_alltrain')
+parser.add_argument('-o', '--output_path', type=str, default='new_all_13_sorted.csv')
 
 parser.add_argument('-d', '--input_dim', action="store_true", default=39)  # (n_fft // 2 + 1) or n_mel or 39
 parser.add_argument('-b', '--batch_size', action="store_true", default=64)
+parser.add_argument('-w', '--num_workers', action="store_true", default=12)
 args = parser.parse_args()
 
 # path related
@@ -48,7 +49,7 @@ with open(train_config, "r") as f:
 
 # Data related
 dataset_test = WaveformDataset(manifest=test_meta, mode='test', transforms=config['feature'])
-dataloader_test = DataLoader(dataset_test, batch_size=args.batch_size, shuffle=False, collate_fn=speech_collate_pad)
+dataloader_test = DataLoader(dataset_test, batch_size=args.batch_size, shuffle=False, collate_fn=speech_collate_pad, num_workers=args.num_workers)
 
 # Model related
 with open(class_ids_path, "r") as f:

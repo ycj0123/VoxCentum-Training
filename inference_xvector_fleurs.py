@@ -21,6 +21,7 @@ from sklearn.metrics import accuracy_score, f1_score, classification_report,  co
 from datasets import load_dataset
 import matplotlib.pyplot as plt
 import seaborn as sn
+from pathlib import Path
 
 
 from modules.utils import fleurs_collate_pad, speech_collate_pad
@@ -32,13 +33,11 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 # Argument parser
 parser = argparse.ArgumentParser()
-parser.add_argument('-t', '--training_dir', type=str,
-                    default='/home/ycj0123/x-vector-pytorch/ckpt/0601_1459_saved_model_new_all_ecapa')
 parser.add_argument('-m', '--model_path', type=str,
-                    default='/home/ycj0123/x-vector-pytorch/ckpt/0601_1459_saved_model_new_all_ecapa/ckpt_5_0.4039')
+                    default='/home/ycj0123/x-vector-pytorch/ckpt/0607_0132_saved_model_new_all_ecapa/ckpt_22_0.3322')
 parser.add_argument('-f', '--manifest_dir', type=str,
                     default='/home/ycj0123/x-vector-pytorch/manifest/new_all')
-parser.add_argument('-o', '--output', type=str, default='output_all_5_fleurs_modlogit')
+parser.add_argument('-o', '--output', type=str, default='output_all_22_fleurs')
 
 
 parser.add_argument('-d', '--input_dim', action="store_true", default=39)  # (n_fft // 2 + 1) or n_mel or 39
@@ -47,8 +46,9 @@ parser.add_argument('-w', '--num_workers', action="store_true", default=16)
 args = parser.parse_args()
 
 # path related
+training_dir = Path(args.model_path).parent
 class_ids_path = os.path.join(args.manifest_dir, 'class_ids.json')
-train_config = os.path.join(args.training_dir, 'config.yaml')
+train_config = os.path.join(training_dir, 'config.yaml')
 with open(train_config, "r") as f:
     config = load_hyperpyyaml(f)
 now = datetime.datetime.now()

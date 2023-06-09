@@ -5,23 +5,23 @@
 # See https://github.com/speechbrain/HyperPyYAML for more
 
 # Path related
-training_meta: manifest/new_all/training.txt
-validation_meta: manifest/new_all/validation.txt
-class_ids: manifest/new_all/class_ids.json
-checkpoint: ckpt/0605_0124_saved_model_new_all_ecapa/ckpt_13_0.3387 # will keep training if not `null`
-save_path: saved_model_new_all_ecapa # actual name will be ckpt/mmdd_savepath
+training_meta: manifest/new_random_family/training.txt
+validation_meta: manifest/new_random_family/validation.txt
+class_ids: manifest/new_random_family/class_ids.json
+checkpoint: ckpt/0607_1519_saved_model_new_ranadom_CE+ConFam_ecapa/ckpt_6_0.409 # will keep training if not `null`
+save_path: saved_model_new_ranadom_CE+ConFam_ecapa # actual name will be ckpt/mmdd_savepath
 
 # dataset & dataloader
-trainset: !name:modules.waveform_dataset.WaveformDataset
+trainset: !name:modules.waveform_dataset.FamilyWaveformDataset
 train:
-    num_workers: 16
-    batch_size: 128
-val:
-    num_workers: 16
+    num_workers: 24
     batch_size: 256
+val:
+    num_workers: 24
+    batch_size: 512
 
 # network
-model: !name:models.ecapa_tdnn.ECAPA_TDNN
+model: !name:models.ecapa_tdnn.ECAPA_TDNN_SupCon
 # model: !name:models.x_vector.X_vector
 num_epochs: 50
 # always saves the best valid checkpoint despite save_epoch and save_step
@@ -31,7 +31,7 @@ save_step: null # int or `null`
 
 # loss
 CE: True
-SupCon: False
+SupCon: True
 Beta: 1 # SupCon's ratio relative to CE
 
 # optimizer
