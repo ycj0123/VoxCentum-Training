@@ -3,6 +3,7 @@ import librosa
 import numpy as np
 import random
 import torch
+import os
 # ===============================================
 #       code from Arsha for loading data.
 # This code extract features for a give audio file
@@ -161,3 +162,11 @@ def speech_collate_pad(batch):
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+def find_all(name, path):
+    result = []
+    for root, dirs, files in os.walk(path):
+        for f in files:
+            if name in f:
+                result.append(os.path.join(root, f))
+    return result

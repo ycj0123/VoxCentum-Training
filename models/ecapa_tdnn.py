@@ -245,11 +245,25 @@ class ECAPA_TDNN_SupCon(ECAPA_TDNN):
         x = self.fc6(x)
         embedding = self.bn6(x)
 
-        preds = self.output(embedding.detach())
-        # preds = self.output(embedding)
+        # preds = self.output(embedding.detach())
+        preds = self.output(embedding)
         proj = self.proj(embedding)
 
         return preds, proj
     
     # def forward(self, x):
     #     return torch.utils.checkpoint.checkpoint(self.custom_forward, x)
+
+
+class ECAPA_TDNN_Multitask(ECAPA_TDNN):
+
+    def __init__(self, input_dim, num_class, num_fam=18, C=512):
+
+        super(ECAPA_TDNN_Multitask, self).__init__(input_dim, num_class, C)
+        self.output_fam = nn.Linear(192, num_fam)
+
+    def forward(self, x):
+        preds, embedding = super(ECAPA_TDNN_Multitask, self).forward(x)
+        fam = self.output_fam(embedding)
+
+        return preds, fam

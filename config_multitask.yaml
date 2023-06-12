@@ -9,19 +9,19 @@ training_meta: manifest/new_random_family/training.txt
 validation_meta: manifest/new_random_family/validation.txt
 class_ids: manifest/new_random_family/class_ids.json
 checkpoint: null # will keep training if not `null`
-save_path: saved_model_new_ranadom_CE+SingCon_ecapa # actual name will be ckpt/mmdd_savepath
+save_path: saved_model_new_ranadom_CE+CEFam_ecapa # actual name will be ckpt/mmdd_savepath
 
 # dataset & dataloader
 trainset: !name:modules.waveform_dataset.FamilyWaveformDataset
 train:
-    num_workers: 24
+    num_workers: 12
     batch_size: 256
 val:
-    num_workers: 24
+    num_workers: 12
     batch_size: 512
 
 # network
-model: !name:models.ecapa_tdnn.ECAPA_TDNN_SupCon
+model: !name:models.ecapa_tdnn.ECAPA_TDNN_Multitask
 # model: !name:models.x_vector.X_vector
 num_epochs: 50
 # always saves the best valid checkpoint despite save_epoch and save_step

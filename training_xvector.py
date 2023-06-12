@@ -181,7 +181,10 @@ def train(dataloader_train, epoch):
                 # loss_aux = criterion_aux(x_vecs_nviews, labels=labels[:bsz], family=families)
                 # loss_aux = criterion_aux(x_vecs_nviews, labels=families)
                 loss_aux = criterion_aux(x_vecs_nviews, labels[:bsz])
-            if (config['CE'] and config['SupCon']) == True:
+            elif config['CE_Fam'] == True:
+                families = torch.cat((families, families))
+                loss_aux = criterion(emb, families)
+            if (config['CE'] and config['SupCon']) or (config['CE'] and config['CE_Fam']) == True:
                 loss += float(config['Beta']) * loss_aux
             elif config['SupCon'] == True:
                 loss = loss_aux
