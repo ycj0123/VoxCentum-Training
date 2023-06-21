@@ -9,7 +9,7 @@ training_meta: manifest/new_random_family/training.txt
 validation_meta: manifest/new_random_family/validation.txt
 class_ids: manifest/new_random_family/class_ids.json
 checkpoint: null # will keep training if not `null`
-save_path: saved_model_new_ranadom_CE+ConSing_ecapa_alpha25 # actual name will be ckpt/mmdd_savepath
+save_path: saved_model_new_random_CE+ConSing_ecapa_alpha25 # actual name will be ckpt/mmdd_savepath
 
 # dataset & dataloader
 trainset: !name:modules.waveform_dataset.FamilyWaveformDataset

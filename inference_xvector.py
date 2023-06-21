@@ -32,7 +32,7 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 # Argument parser
 parser = argparse.ArgumentParser()
 parser.add_argument('-m', '--model_path', type=str,
-                    default='/home/ycj0123/x-vector-pytorch/ckpt/0603_2052_saved_model_new_ranadom_ecapa/ckpt_19_0.3718')
+                    default='/home/ycj0123/x-vector-pytorch/ckpt/0603_2052_saved_model_new_random_ecapa/ckpt_19_0.3718')
 parser.add_argument('-f', '--manifest_dir', type=str,
                     default='/home/ycj0123/x-vector-pytorch/manifest/new_random')
 parser.add_argument('-o', '--output', type=str, default='output_rand_19')

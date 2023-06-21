@@ -8,8 +8,8 @@
 training_meta: manifest/new_random_family/training.txt
 validation_meta: manifest/new_random_family/validation.txt
 class_ids: manifest/new_random_family/class_ids.json
-checkpoint: /home/ycj0123/x-vector-pytorch/ckpt/0613_1114_saved_model_new_ranadom_CE+CEFam_ecapa/ckpt_6_0.4129 # will keep training if not `null`
-save_path: saved_model_new_ranadom_CE+CEFam_ecapa # actual name will be ckpt/mmdd_savepath
+checkpoint: /home/ycj0123/x-vector-pytorch/ckpt/0613_1114_saved_model_new_random_CE+CEFam_ecapa/ckpt_6_0.4129 # will keep training if not `null`
+save_path: saved_model_new_random_CE+CEFam_ecapa # actual name will be ckpt/mmdd_savepath
 
 # dataset & dataloader
 trainset: !name:modules.waveform_dataset.FamilyWaveformDataset
