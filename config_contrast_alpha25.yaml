@@ -9,7 +9,7 @@ training_meta: manifest/new_random_family/training.txt
 validation_meta: manifest/new_random_family/validation.txt
 class_ids: manifest/new_random_family/class_ids.json
 checkpoint: null # will keep training if not `null`
-save_path: saved_model_new_ranadom_CE+ConFam_ecapa_alpha75 # actual name will be ckpt/mmdd_savepath
+save_path: saved_model_new_ranadom_CE+ConSing_ecapa_alpha25 # actual name will be ckpt/mmdd_savepath
 
 # dataset & dataloader
 trainset: !name:modules.waveform_dataset.FamilyWaveformDataset
@@ -33,7 +33,7 @@ save_step: null # int or `null`
 CE: True
 SupCon: True # Check training_xvector.py to ensure cantrastive label is correct
 CE_Fam: False # use either SupCon or CE_Fam, but not both
-Alpha: 0.75 # SupCon's ratio relative to CE
+Alpha: 0.25 # SupCon's ratio relative to CE
 
 # optimizer
 optimizer: !name:torch.optim.Adam

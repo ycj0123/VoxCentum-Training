@@ -32,7 +32,8 @@ save_step: null # int or `null`
 # loss
 CE: True
 SupCon: False
-Beta: 1 # SupCon's ratio relative to CE
+CE_Fam: True # use either SupCon or CE_Fam, not both
+Alpha: 1 # SupCon's ratio relative to CE
 
 # optimizer
 optimizer: !name:torch.optim.Adam

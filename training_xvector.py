@@ -185,7 +185,7 @@ def train(dataloader_train, epoch):
                 families = torch.cat((families, families))
                 loss_aux = criterion(emb, families)
             if (config['CE'] and config['SupCon']) or (config['CE'] and config['CE_Fam']) == True:
-                loss += float(config['Beta']) * loss_aux
+                loss += float(config['Alpha']) * loss_aux
             elif config['SupCon'] == True:
                 loss = loss_aux
         # pred_logits, emb = model(feats)  # x_vec = B x Dim

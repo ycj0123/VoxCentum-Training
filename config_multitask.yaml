@@ -8,17 +8,17 @@
 training_meta: manifest/new_random_family/training.txt
 validation_meta: manifest/new_random_family/validation.txt
 class_ids: manifest/new_random_family/class_ids.json
-checkpoint: null # will keep training if not `null`
+checkpoint: /home/ycj0123/x-vector-pytorch/ckpt/0613_1114_saved_model_new_ranadom_CE+CEFam_ecapa/ckpt_6_0.4129 # will keep training if not `null`
 save_path: saved_model_new_ranadom_CE+CEFam_ecapa # actual name will be ckpt/mmdd_savepath
 
 # dataset & dataloader
 trainset: !name:modules.waveform_dataset.FamilyWaveformDataset
 train:
-    num_workers: 12
-    batch_size: 256
+    num_workers: 24
+    batch_size: 128
 val:
-    num_workers: 12
-    batch_size: 512
+    num_workers: 24
+    batch_size: 256
 
 # network
 model: !name:models.ecapa_tdnn.ECAPA_TDNN_Multitask
@@ -33,7 +33,7 @@ save_step: null # int or `null`
 CE: True
 SupCon: False
 CE_Fam: True # use either SupCon or CE_Fam, not both
-Beta: 1 # SupCon's ratio relative to CE
+Alpha: 1 # SupCon's ratio relative to CE
 
 # optimizer
 optimizer: !name:torch.optim.Adam

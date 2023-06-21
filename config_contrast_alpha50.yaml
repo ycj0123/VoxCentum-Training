@@ -5,23 +5,23 @@
 # See https://github.com/speechbrain/HyperPyYAML for more
 
 # Path related
-training_meta: manifest/new_filtered_13/training.txt
-validation_meta: manifest/new_filtered_13/validation.txt
-class_ids: manifest/new_filtered_13/class_ids.json
+training_meta: manifest/new_random_family/training.txt
+validation_meta: manifest/new_random_family/validation.txt
+class_ids: manifest/new_random_family/class_ids.json
 checkpoint: null # will keep training if not `null`
-save_path: saved_model_new_filtered_13_ecapa # actual name will be ckpt/mmdd_savepath
+save_path: saved_model_new_ranadom_CE+ConSing_ecapa_alpha50 # actual name will be ckpt/mmdd_savepath
 
 # dataset & dataloader
-trainset: !name:modules.waveform_dataset.WaveformDataset
+trainset: !name:modules.waveform_dataset.FamilyWaveformDataset
 train:
-    num_workers: 12
-    batch_size: 128
-val:
-    num_workers: 12
+    num_workers: 24
     batch_size: 256
+val:
+    num_workers: 24
+    batch_size: 512
 
 # network
-model: !name:models.ecapa_tdnn.ECAPA_TDNN
+model: !name:models.ecapa_tdnn.ECAPA_TDNN_SupCon
 # model: !name:models.x_vector.X_vector
 num_epochs: 50
 # always saves the best valid checkpoint despite save_epoch and save_step
@@ -31,8 +31,9 @@ save_step: null # int or `null`
 
 # loss
 CE: True
-SupCon: False
-Beta: 1 # SupCon's ratio relative to CE
+SupCon: True # Check training_xvector.py to ensure cantrastive label is correct
+CE_Fam: False # use either SupCon or CE_Fam, but not both
+Alpha: 0.5 # SupCon's ratio relative to CE
 
 # optimizer
 optimizer: !name:torch.optim.Adam
