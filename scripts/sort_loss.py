@@ -23,7 +23,7 @@ from tqdm import tqdm
 
 from modules.utils import speech_collate_pad
 from models.x_vector import X_vector
-from modules.waveform_dataset import WaveformDataset
+from modules.speech_dataset import LIDDataset
 
 
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -48,7 +48,7 @@ with open(train_config, "r") as f:
     config = load_hyperpyyaml(f)
 
 # Data related
-dataset_test = WaveformDataset(manifest=test_meta, mode='test', transforms=config['feature'])
+dataset_test = LIDDataset(manifest=test_meta, mode='test', transforms=config['feature'])
 dataloader_test = DataLoader(dataset_test, batch_size=args.batch_size, shuffle=False, collate_fn=speech_collate_pad, num_workers=args.num_workers)
 
 # Model related

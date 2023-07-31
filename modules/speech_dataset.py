@@ -15,7 +15,7 @@ from modules import utils
 logger = logging.getLogger(__name__)
 
 
-class WaveformDataset(Dataset):
+class LIDDataset(Dataset):
     """Speech dataset."""
 
     def __init__(self, manifest, mode, min_dur_sec=None, wf_sec=None, transforms=None, feature=None):
@@ -56,14 +56,14 @@ class WaveformDataset(Dataset):
         return sample
 
 
-class FamilyWaveformDataset(WaveformDataset):
+class FamilyLIDDataset(LIDDataset):
     """Speech dataset."""
 
     def __init__(self, manifest, mode, min_dur_sec=None, wf_sec=None, feature=None, transforms=None):
         """
         Read the textfile and get the paths
         """
-        super(FamilyWaveformDataset, self).__init__(manifest, mode, min_dur_sec=min_dur_sec,
+        super(FamilyLIDDataset, self).__init__(manifest, mode, min_dur_sec=min_dur_sec,
                                                     wf_sec=wf_sec, transforms=transforms, feature=feature)
         self.families = [int(line.rstrip('\n').split(' ')[2]) for line in open(manifest)]
 

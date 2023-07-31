@@ -30,9 +30,8 @@ from torchaudio_augmentations import *
 
 from modules.mfcc import MFCC_Delta
 from modules.utils import speech_collate, count_parameters
-from modules.waveform_dataset import WaveformDataset, FamilyWaveformDataset
+from modules.speech_dataset import LIDDataset, FamilyLIDDataset
 from modules.contrastive_loss import SupConLoss
-from modules.AAM_softmax_loss import AAMsoftmax
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] - %(message)s',
@@ -70,7 +69,7 @@ transforms = Compose([
 
 dataset_train = config['trainset'](manifest=config["training_meta"], mode='train',
                                 min_dur_sec=config["min_dur_sec"], wf_sec=config["sample_sec"], transforms=transforms, feature=config['feature'])
-dataset_val = WaveformDataset(manifest=config["validation_meta"], mode='train',
+dataset_val = LIDDataset(manifest=config["validation_meta"], mode='train',
                               min_dur_sec=config["min_dur_sec"], wf_sec=config["sample_sec"], feature=config['feature'])
 
 dataloader_train = DataLoader(dataset_train, batch_size=config["train"]["batch_size"],

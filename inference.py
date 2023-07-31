@@ -24,7 +24,7 @@ from pathlib import Path
 
 from modules.utils import speech_collate_pad, find_all
 from models.x_vector import X_vector
-from modules.waveform_dataset import WaveformDataset
+from modules.speech_dataset import LIDDataset
 
 
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -32,10 +32,10 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 # Argument parser
 parser = argparse.ArgumentParser()
 parser.add_argument('-m', '--model_path', type=str,
-                    default='/home/ycj0123/x-vector-pytorch/ckpt/0603_2052_saved_model_new_random_ecapa/ckpt_19_0.3718')
+                    default='/home/meta-531-216/VoxCentum-Training/ckpt/0603_2052_saved_model_new_ranadom_ecapa/ckpt_21_0.3642')
 parser.add_argument('-f', '--manifest_dir', type=str,
-                    default='/home/ycj0123/x-vector-pytorch/manifest/new_random')
-parser.add_argument('-o', '--output', type=str, default='output_rand_19')
+                    default='/home/meta-531-216/VoxCentum-Training/manifest/test')
+parser.add_argument('-o', '--output', type=str, default='test')
 
 parser.add_argument('-d', '--input_dim', action="store_true", default=39)  # (n_fft // 2 + 1) or n_mel or 39
 parser.add_argument('-b', '--batch_size', action="store_true", default=128)
@@ -54,7 +54,7 @@ now = datetime.datetime.now()
 savepath = os.path.join('outputs', f'{now.strftime("%m%d_%H%M")}_{args.output}')
 
 # Data related
-dataset_test = WaveformDataset(manifest=test_meta, mode='test', transforms=config['feature'])
+dataset_test = LIDDataset(manifest=test_meta, mode='test', transforms=config['feature'])
 dataloader_test = DataLoader(dataset_test, batch_size=args.batch_size, shuffle=False, collate_fn=speech_collate_pad, num_workers=args.num_workers)
 
 # Model related
